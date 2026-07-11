@@ -1,21 +1,40 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link ,useNavigate,Navigate} from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
+import { useSelector } from 'react-redux'
+import { useAuth } from '../hook/useAuth'
 
 const Login = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
+    const [ email, setEmail ] = useState('')
+    const [ password, setPassword ] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
+    const user = useSelector(state => state.auth.user)
+    const loading = useSelector(state => state.auth.loading)
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // replace with real auth call
-        console.log("Login submit:", { email, password });
-    };
+    const { handleLogin } = useAuth()
+
+    const navigate = useNavigate()
+
+    const submitForm = async (event) => {
+        event.preventDefault()
+
+        const payload = {
+            email,
+            password,
+        }
+
+        await handleLogin(payload)
+        navigate("/")
+
+    }
+
+    if(!loading && user){
+        return <Navigate to="/" replace />
+    }
 
     return (
         <AuthLayout title="Welcome back" subtitle="Sign in to your account">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={submitForm} className="space-y-4">
                 <label className="block">
                     <span className="text-sm text-gray-300">Email</span>
                     <input
@@ -36,7 +55,7 @@ const Login = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         className="mt-1 block w-full pr-14 px-4 py-3 rounded-xl bg-white/5 border border-white/8 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
-                        placeholder="••••••••"
+                        placeholder="********"
                     />
 
                     <button

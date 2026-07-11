@@ -1,0 +1,30 @@
+
+
+
+
+backend/node_modules
+frontend/node_modules
+
+backend/.env
+frontend/.env
+
+package.json
+package-lock.json
+
+
+# Logs
+*.log
+log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+
+
+frontend/dist

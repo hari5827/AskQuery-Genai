@@ -49,7 +49,7 @@ const Register = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         className="mt-1 block w-full pr-14 px-4 py-3 rounded-xl bg-white/5 border border-white/8 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
-                        placeholder="••••••••"
+                        placeholder="********"
                     />
 
                     <button
