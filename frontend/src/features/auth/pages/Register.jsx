@@ -1,19 +1,21 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
-
+import { useAuth } from "../hook/useAuth";
+import { useNavigate } from "react-router-dom";
 const Register = () => {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // replace with real registration call
-        console.log("Register submit:", { username, email, password });
-    };
-
+    const { handleRegister } = useAuth();
+  
+    const navigate = useNavigate();
+   const handleSubmit = async (e) => {
+  e.preventDefault();
+  await handleRegister({ email, username, password });
+  navigate("/"); // or wherever you want after register
+};
     return (
         <AuthLayout title="Create account" subtitle="Join and Solve your queries">
             <form onSubmit={handleSubmit} className="space-y-4">
