@@ -19,4 +19,20 @@ export async function login({ email, password }) {
 export async function getMe() {
     const response = await api.get("/api/auth/get-me")
     return response.data
-}// Replace with your backend API URL
+}
+
+export const logout = async () => {
+
+  const res = await api.post("/api/auth/logout");
+
+  return res.data;
+
+};
+
+export const deleteAccount = async ({ email, password }) => {
+
+  const res = await api.delete("/api/auth/delete-account", { data: { email, password } });
+
+  return res.data;
+
+};

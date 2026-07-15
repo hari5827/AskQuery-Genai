@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
 import { useChat } from "../hook/useChat";
+import { useAuth } from "../../auth/hook/useAuth";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { X, Copy, Check } from "lucide-react";
+import { X, Copy, Check, Settings, LogOut, Trash2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import logo from "../../../../apple-touch-icon.png";
 import "katex/dist/katex.min.css";
 import remarkMath from "remark-math";
@@ -89,6 +90,7 @@ function CopyMessageButton({ content }) {
 const Dashboard = () => {
 
   const chat = useChat();
+  const { handleLogout, handleDeleteAccount } = useAuth();
 
   const [chatInput, setChatInput] = useState("");
 
@@ -99,7 +101,27 @@ const Dashboard = () => {
   const { initializeSocketConnection, handleGetChats, handleClearCurrentChat, handleDeleteChat } = useChat();
   const isLoading = useSelector((state) => state.chat.isLoading);
 
+  // Sidebar collapse/expand
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // Gear menu / account modals
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [modalType, setModalType] = useState(null); // 'logout' | 'delete' | null
+  const [deleteEmail, setDeleteEmail] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [showLogoutToast, setShowLogoutToast] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close the gear dropdown when clicking outside it
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Tracks how many messages existed last render, per chat,
   // so we only animate the newest bubble instead of replaying
@@ -149,22 +171,28 @@ const Dashboard = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#141414_0%,#090909_45%,#050505_100%)]" />
       </div>
 
-      <div className="mx-auto flex h-full max-w-[1500px] gap-5 p-5">
+      <div className="mx-auto flex h-full w-full max-w-[1800px] gap-4 p-4">
         {/* ===================== SIDEBAR ===================== */}
 
-        <aside className="hidden h-full w-[270px] shrink-0 rounded-3xl border border-white/5 bg-[#0d0d0d] md:flex md:flex-col">
+        <aside
+          className={`hidden h-full shrink-0 overflow-hidden rounded-3xl border border-white/5 bg-[#0d0d0d] transition-all duration-300 ease-in-out md:flex md:flex-col ${
+            sidebarOpen ? "w-[260px] opacity-100" : "w-0 border-none opacity-0"
+          }`}
+        >
           {/* Logo */}
 
-          <div className="border-b border-white/5 p-5">
+          <div className="w-[260px] border-b border-white/5 p-5">
             <div className="flex items-center gap-3">
               <img
                 src={logo}
                 alt="AskQuery"
-                className="h-11 w-11 object-contain"
+                className="h-11 w-11 shrink-0 object-contain"
               />
 
               <div>
-                <h1 className="text-xl font-bold tracking-wide">AskQuery</h1>
+                <h1 className="text-xl font-bold tracking-wide">
+                  Ask<span className="text-red-400">Query</span>
+                </h1>
 
                 <p className="text-xs text-zinc-500">AI Assistant</p>
               </div>
@@ -174,13 +202,13 @@ const Dashboard = () => {
               onClick={handleClearCurrentChat}
               className="mt-5 w-full rounded-2xl bg-gradient-to-r from-red-700 to-red-600 py-3 text-sm font-semibold transition hover:from-red-600 hover:to-red-500"
             >
-              + New Chat
+               New Chat
             </button>
           </div>
 
           {/* Chat List */}
 
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="w-[260px] flex-1 overflow-y-auto p-4">
             <p className="mb-3 text-xs uppercase tracking-[2px] text-zinc-500">
               Recent Chats
             </p>
@@ -231,21 +259,53 @@ const Dashboard = () => {
 
           {/* User */}
 
-          <div className="border-t border-white/5 p-4">
-            <div className="flex items-center gap-3 rounded-2xl bg-white/[0.03] p-3">
+          <div className="w-[260px] border-t border-white/5 p-4">
+            <div ref={menuRef} className="relative flex items-center gap-3 rounded-2xl bg-white/[0.03] p-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 font-semibold">
                 {user?.name?.charAt(0)?.toUpperCase() || "U"}
               </div>
 
-              <div className="overflow-hidden">
+              <div className="flex-1 overflow-hidden">
                 <p className="truncate text-sm font-medium">
                   {user?.name || "User"}
                 </p>
 
-                <p className="truncate text-s  bg-white/[0.03]">
+                <p className="truncate text-xs text-zinc-500">
                   {user?.username}
                 </p>
               </div>
+
+              <button
+                onClick={() => setMenuOpen((prev) => !prev)}
+                className="rounded-lg p-2 text-zinc-400 transition hover:bg-red-700/10 hover:text-red-500"
+              >
+                <Settings size={18} />
+              </button>
+
+              {menuOpen && (
+                <div className="absolute bottom-full right-0 mb-2 w-48 overflow-hidden rounded-2xl border border-white/10 bg-[#111111] shadow-xl">
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setModalType("logout");
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-3 text-sm text-zinc-300 transition hover:bg-red-700/10 hover:text-red-500"
+                  >
+                    <LogOut size={15} />
+                    Logout
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setModalType("delete");
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-3 text-sm text-zinc-300 transition hover:bg-red-700/10 hover:text-red-500"
+                  >
+                    <Trash2 size={15} />
+                    Delete account
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </aside>
@@ -255,12 +315,22 @@ const Dashboard = () => {
         <section className="flex h-full flex-1 flex-col rounded-3xl border border-white/5 bg-[#090909]">
           {/* Header */}
 
-          <header className="border-b border-white/5 px-8 py-5">
-            <h2 className="text-xl font-semibold">
-              {currentChatId ? chats[currentChatId]?.title : "New Conversation"}
-            </h2>
+          <header className="flex items-center justify-between border-b border-white/5 px-6 py-4">
+            <div>
+              <h2 className="text-xl font-semibold">
+                {currentChatId ? chats[currentChatId]?.title : "New Conversation"}
+              </h2>
 
-            <p className="mt-1 text-sm text-zinc-500">AskQuery AI Assistant</p>
+              <p className="mt-1 text-sm text-zinc-500">AskQuery AI Assistant</p>
+            </div>
+
+            <button
+              onClick={() => setSidebarOpen((prev) => !prev)}
+              className="hidden rounded-xl p-2 text-zinc-400 transition hover:bg-white/5 hover:text-white md:block"
+              title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+            >
+              {sidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
+            </button>
           </header>
 
           {/* Messages */}
@@ -395,18 +465,14 @@ const Dashboard = () => {
               ) : (
                 <div className="flex h-full items-center justify-center py-32">
                   <div className="text-center">
-                    <img
-                      src={logo}
-                      alt="AskQuery"
-                      className="mx-auto mb-8 h-24 w-24 object-contain"
-                    />
-
-                    <h1 className="text-6xl font-black tracking-tight">
-                      Ask<span className="text-red-600">Query</span>
+                    
+                    <h1 className="text-5xl font-bold tracking-tight">
+                      <span className="text-white">Good to see you, </span>
+                      <span className="text-red-400">{user?.username || "there"}</span>
                     </h1>
 
                     <p className="mt-5 text-xl text-zinc-500">
-                      Start a conversation with your AI assistant.
+                      Know Your Solution.
                     </p>
                   </div>
                 </div>
@@ -440,12 +506,12 @@ const Dashboard = () => {
         </section>
       </div>
 
-      {/* Delete confirmation modal */}
+      {/* Delete chat confirmation modal */}
       {chatToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="w-80 rounded-2xl border border-white/10 bg-[#111111] p-6">
             <p className="mb-5 text-sm text-zinc-300">
-              Delete this chat? This can't be undone.
+              Delete this chat?
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -465,6 +531,99 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Logout confirmation modal */}
+      {modalType === "logout" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-80 rounded-2xl border border-white/10 bg-[#111111] p-6">
+            <p className="mb-5 text-sm text-zinc-300">
+              Are you sure you want to logout?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setModalType(null)}
+                className="rounded-xl bg-white/5 px-4 py-2 text-sm hover:bg-white/10"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  await handleLogout();
+                  setModalType(null);
+                  setShowLogoutToast(true);
+                  setTimeout(() => setShowLogoutToast(false), 2500);
+                }}
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-500"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete account confirmation modal */}
+      {modalType === "delete" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-96 rounded-2xl border border-white/10 bg-[#111111] p-6">
+            <p className="mb-1 text-sm font-semibold text-red-500">
+              Delete account
+            </p>
+            <p className="mb-5 text-sm text-zinc-400">
+              This action cannot be undone. Enter your email and password to confirm.
+            </p>
+
+            <div className="space-y-3">
+              <input
+                type="email"
+                placeholder="Email"
+                value={deleteEmail}
+                onChange={(e) => setDeleteEmail(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm outline-none focus:border-red-600"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm outline-none focus:border-red-600"
+              />
+            </div>
+
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setModalType(null);
+                  setDeleteEmail("");
+                  setDeletePassword("");
+                }}
+                className="rounded-xl bg-white/5 px-4 py-2 text-sm hover:bg-white/10"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={!deleteEmail || !deletePassword}
+                onClick={async () => {
+                  await handleDeleteAccount({ email: deleteEmail, password: deletePassword });
+                  setModalType(null);
+                  setDeleteEmail("");
+                  setDeletePassword("");
+                }}
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-500 disabled:opacity-40"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logout toast */}
+      {showLogoutToast && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-white/10 bg-[#111111] px-5 py-3 text-sm text-zinc-200 shadow-lg">
+          Logged out successfully
         </div>
       )}
     </main>

@@ -201,7 +201,12 @@ export async function login(req, res) {
         username: user.username,
     }, process.env.JWT_SECRET, { expiresIn: '4d' })
 
-    res.cookie("token", token)
+    res.cookie("token", token,{
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 4 * 24 * 60 * 60 * 1000,
+    });
 
     res.status(200).json({
         message: "Login successful",
@@ -235,5 +240,63 @@ export async function getMe(req, res) {
     })
 }
 
+
+export async function logout(req, res) {
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+    });
+
+    return res.status(200).json({
+        success: true,
+        message: "Logged out successfully",
+    });
+}
+
+
+
+export async function deleteAccount(req, res) {
+    try {
+        const { password } = req.body;
+
+        const user = await userModel.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found",
+            });
+        }
+
+        const isPasswordMatch = await user.comparePassword(password);
+
+        if (!isPasswordMatch) {
+            return res.status(400).json({
+                success: false,
+                message: "Incorrect password",
+            });
+        }
+
+        await userModel.findByIdAndDelete(user._id);
+
+        res.clearCookie("token", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Account deleted successfully",
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+}
 
 
