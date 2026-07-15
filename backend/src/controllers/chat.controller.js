@@ -1,11 +1,11 @@
-import { getResponseFromAI ,generateChatTitle } from "../services/ai.service.js";
+import { generateResponse ,generateChatTitle } from "../services/ai.service.js";
 import chatModel from "../models/chat.model.js";
 import messageModel from "../models/message.model.js";
 
 export async function sendMessage(req, res) {
-    const { message ,chat: chatId } = req.body;
-
-      
+    
+    const { message, chat: chatId, webSearch } = req.body;
+    console.log("🔍 webSearch flag received:", webSearch)
      
        let title = null, chat = null;
 
@@ -25,7 +25,7 @@ export async function sendMessage(req, res) {
     })
 
         const messages = await messageModel.find({ chat: chatId || chat._id })
-         const result = await getResponseFromAI(messages);
+         const result = await generateResponse(messages, webSearch);
 
      const aiMessage = await messageModel.create({
         chat: chatId || chat._id,

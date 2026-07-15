@@ -1,6 +1,10 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatMistralAI } from "@langchain/mistralai";
-import { HumanMessage,SystemMessage,AIMessage } from "@langchain/core/messages";
+import { HumanMessage,SystemMessage,AIMessage} from "@langchain/core/messages";
+import { tool } from "@langchain/core/tools";
+import { createAgent } from "langchain";
+import * as z from "zod";
+import { searchInternet } from "./internet.service.js";
 
 const geminimodel = new ChatGoogleGenerativeAI({
    model: "gemini-3.1-flash-lite",
@@ -12,21 +16,61 @@ model: "mistral-small-latest",
 apikey: process.env.MISTRAL_API_KEY
 });
 
+const searchInternetTool = tool(
+    searchInternet,
+    {
+        name: "searchInternet",
+        description: "Use this tool to get the latest information from the internet.",
+        schema: z.object({
+            query: z.string().describe("The search query to look up on the internet.")
+        })
+    }
+)
 
-export async function getResponseFromAI(messages) {
-const response = await geminimodel.invoke(
-    messages.map((msg) => {
-      if (msg.role === "user") {
+const agent = createAgent({
+    model: mistralmodel,
+    tools: [ searchInternetTool ],
+})
+export async function generateResponse(messages, webSearchEnabled = false) {
+  console.log(messages);
+
+  if (webSearchEnabled) {
+    // Globe ON — agent has access to the searchInternet tool, may call Tavily
+    const response = await agent.invoke({
+      messages: [
+        new SystemMessage(`
+          You are a helpful and precise assistant for answering questions.
+          If you don't know the answer, say you don't know.
+          If the question requires up-to-date information, use the "searchInternet" tool to get the latest information from the internet and then answer based on the search results.
+        `),
+        ...messages.map((msg) => {
+          if (msg.role == "user") {
+            return new HumanMessage(msg.content);
+          } else if (msg.role == "ai") {
+            return new AIMessage(msg.content);
+          }
+        }),
+      ],
+    });
+
+    return response.messages[response.messages.length - 1].text;
+  }
+
+   const response = await mistralmodel.invoke([
+    new SystemMessage(`
+      You are a helpful and precise assistant for answering questions.
+      If you don't know the answer, say you don't know.
+    `),
+    ...messages.map((msg) => {
+      if (msg.role == "user") {
         return new HumanMessage(msg.content);
-      } else if (msg.role === "ai") {
+      } else if (msg.role == "ai") {
         return new AIMessage(msg.content);
       }
-    })
-  );
+    }),
+  ]);
 
-return response.text;
-
-
+  return response.text;
 }
 
 

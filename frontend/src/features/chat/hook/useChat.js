@@ -7,10 +7,10 @@ export const useChat = () => {
 
     const dispatch = useDispatch()
 
-  async function handleSendMessage({ message, chatId }) {
+  async function handleSendMessage({ message, chatId, webSearch }) {
     dispatch(setLoading(true))
     try {
-        const data = await sendMessage({ message, chatId })
+        const data = await sendMessage({ message, chatId, webSearch })
         const { chat, aiMessage } = data
         if (!chatId)
             dispatch(createNewChat({
