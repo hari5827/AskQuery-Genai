@@ -9,25 +9,38 @@ export const useChat = () => {
 
   async function handleSendMessage({ message, chatId, webSearch }) {
     dispatch(setLoading(true))
+
+    // Show the user's message immediately for an existing chat
+    if (chatId) {
+        dispatch(addNewMessage({
+            chatId,
+            content: message,
+            role: "user",
+        }))
+    }
+
     try {
         const data = await sendMessage({ message, chatId, webSearch })
         const { chat, aiMessage } = data
-        if (!chatId)
+
+        if (!chatId) {
             dispatch(createNewChat({
                 chatId: chat._id,
                 title: chat.title,
             }))
-        dispatch(addNewMessage({
-            chatId: chatId || chat._id,
-            content: message,
-            role: "user",
-        }))
+            dispatch(addNewMessage({
+                chatId: chat._id,
+                content: message,
+                role: "user",
+            }))
+            dispatch(setCurrentChatId(chat._id))
+        }
+
         dispatch(addNewMessage({
             chatId: chatId || chat._id,
             content: aiMessage.content,
             role: aiMessage.role,
         }))
-        dispatch(setCurrentChatId(chat._id))
     } catch (error) {
         console.error("Failed to send message:", error)
         dispatch(setError(error?.message || "Something went wrong"))
