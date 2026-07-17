@@ -35,8 +35,10 @@ const Dashboard = () => {
     handleDeleteChat,
   } = useChat();
 
-  // Sidebar collapse/expand
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Sidebar collapse/expand — open by default on desktop, closed on mobile
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 768
+  );
 
   // Account modals
   const [modalType, setModalType] = useState(null); // 'logout' | 'delete' | null
@@ -96,9 +98,10 @@ const Dashboard = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#141414_0%,#090909_45%,#050505_100%)]" />
       </div>
 
-      <div className="mx-auto flex h-full w-full max-w-[1800px] gap-4 p-4">
+      <div className="mx-auto flex h-full w-full max-w-[1800px] gap-0 p-0 sm:gap-4 sm:p-4">
         <Sidebar
           sidebarOpen={sidebarOpen}
+          onCloseMobile={() => setSidebarOpen(false)}
           chats={chats}
           currentChatId={currentChatId}
           onOpenChat={openChat}
@@ -110,7 +113,7 @@ const Dashboard = () => {
           logo={logo}
         />
 
-        <section className="flex h-full flex-1 flex-col rounded-3xl border border-white/5 bg-[#090909]">
+        <section className="flex h-full flex-1 flex-col border-0 border-white/5 bg-[#090909] sm:rounded-3xl sm:border">
           <ChatHeader
             title={currentChatId ? chats[currentChatId]?.title : "New Conversation"}
             sidebarOpen={sidebarOpen}
@@ -125,6 +128,7 @@ const Dashboard = () => {
             newestIndex={newestIndex}
             user={user}
             logo={logo}
+            webSearchOn={webSearchOn}
           />
 
           <ChatInput

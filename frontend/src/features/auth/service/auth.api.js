@@ -1,9 +1,11 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL : "http://localhost:3000",
-    withCredentials: true
-});
+  baseURL: window.location.hostname === "localhost"
+    ? "http://localhost:3000"
+    : "http://192.168.29.238:3000/",  // apna actual laptop IP daal
+  withCredentials: true,
+})
 
 
 export async function register({ email, username, password }) {

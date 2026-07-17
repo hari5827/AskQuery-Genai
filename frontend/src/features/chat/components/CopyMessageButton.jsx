@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Copy, Check } from "lucide-react";
 
-export function CopyMessageButton({ content }) {
+export function CopyMessageButton({ content, variant = "dark" }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -14,14 +14,19 @@ export function CopyMessageButton({ content }) {
     }
   };
 
+  const colorClasses =
+    variant === "light"
+      ? "text-white/70 hover:text-white"
+      : "text-zinc-500 hover:text-white";
+
   return (
     <button
       onClick={handleCopy}
-      className="mt-3 flex items-center gap-1.5 text-xs text-zinc-500 transition hover:text-white"
+      className={`mt-3 flex items-center gap-1.5 text-xs transition ${colorClasses}`}
     >
       {copied ? (
         <>
-          <Check size={13} className="text-green-500" />
+          <Check size={13} className={variant === "light" ? "text-white" : "text-green-500"} />
           Copied
         </>
       ) : (

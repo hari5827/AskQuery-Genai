@@ -21,14 +21,20 @@ const markdownComponents = {
       );
     }
     // Block-level code is wrapped by `pre` below;
-    // just pass children through untouched here.
+    // just pass children (with className, which carries the
+    // "language-xxx" hint) through untouched here.
     return <code className={className}>{children}</code>;
   },
   pre: ({ children }) => {
     // `children` here is the <code> element produced above;
-    // pull its raw text content out for CodeBlock.
-    const codeContent = children?.props?.children;
-    return <CodeBlock>{codeContent}</CodeBlock>;
+    // pull its raw text content + language out for CodeBlock.
+    const codeElement = children;
+    const codeContent = codeElement?.props?.children;
+    const className = codeElement?.props?.className || "";
+    const match = /language-(\w+)/.exec(className);
+    const language = match ? match[1] : "text";
+
+    return <CodeBlock language={language}>{codeContent}</CodeBlock>;
   },
   h1: ({ children }) => <h1 className="mb-3 text-3xl font-bold">{children}</h1>,
   h2: ({ children }) => <h2 className="mb-3 text-2xl font-bold">{children}</h2>,
@@ -47,12 +53,15 @@ export function MessageBubble({ message, isNewest }) {
       <div
         className={
           isUser
-            ? "max-w-[520px] rounded-3xl rounded-br-lg bg-gradient-to-r from-red-700 to-red-600 px-5 py-3 text-white shadow-lg shadow-red-900/20"
-            : "max-w-[800px] rounded-3xl rounded-bl-lg border border-white/5 bg-[#111111] px-6 py-5 text-zinc-200"
+            ? "max-w-[85%] rounded-3xl rounded-br-lg bg-gradient-to-r from-red-700 to-red-600 px-4 py-3 text-white shadow-lg shadow-red-900/20 sm:max-w-[520px] sm:px-5"
+            : "max-w-[85%] rounded-3xl rounded-bl-lg border border-white/5 bg-[#111111] px-4 py-4 text-zinc-200 sm:max-w-[800px] sm:px-6 sm:py-5"
         }
       >
         {isUser ? (
-          <p className="whitespace-pre-wrap leading-7">{message.content}</p>
+          <>
+            <p className="whitespace-pre-wrap leading-7">{message.content}</p>
+            <CopyMessageButton content={message.content} variant="light" />
+          </>
         ) : (
           <>
             <ReactMarkdown
