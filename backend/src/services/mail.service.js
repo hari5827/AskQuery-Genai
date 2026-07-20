@@ -27,4 +27,5 @@ transporter.verify()
 
     const details = await transporter.sendMail(mailOptions);
     console.log("Email sent:", details);
+     return "email sent successfully, to " + to;
 }

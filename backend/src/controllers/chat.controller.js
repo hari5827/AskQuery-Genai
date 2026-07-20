@@ -5,7 +5,6 @@ import messageModel from "../models/message.model.js";
 export async function sendMessage(req, res) {
     
     const { message, chat: chatId, webSearch } = req.body;
-    console.log("🔍 webSearch flag received:", webSearch)
      
        let title = null, chat = null;
 
@@ -25,12 +24,13 @@ export async function sendMessage(req, res) {
     })
 
         const messages = await messageModel.find({ chat: chatId || chat._id })
-           const result = await generateResponse(messages, webSearch, req.user.id);
+           const { text, sources } = await generateResponse(messages, webSearch, req.user.id);
 
      const aiMessage = await messageModel.create({
         chat: chatId || chat._id,
-        content: result,
-        role : "ai"
+        content: text,
+        role : "ai",
+        sources,
 
      })
 
@@ -105,7 +105,3 @@ export async function deleteChat(req, res) {
         message: "Chat deleted successfully"
     })
 }
-
-
-
-

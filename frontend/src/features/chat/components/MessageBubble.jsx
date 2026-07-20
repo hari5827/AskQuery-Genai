@@ -41,6 +41,43 @@ const markdownComponents = {
   h3: ({ children }) => <h3 className="mb-3 text-xl font-semibold">{children}</h3>,
 };
 
+// Shows the pages the AI actually pulled from a web search, as
+// small pill-style links. Each hover turns a soft light-red.
+function SourcesList({ sources }) {
+  if (!sources || sources.length === 0) return null;
+
+  return (
+    <div className="mt-4 border-t border-white/5 pt-3">
+      <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
+        Sources
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {sources.map((source, index) => {
+          let hostname = source.url;
+          try {
+            hostname = new URL(source.url).hostname.replace("www.", "");
+          } catch (err) {
+            // keep the raw url as a fallback label
+          }
+
+          return (
+            <a
+              key={index}
+              href={source.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={source.title}
+              className="max-w-[220px] truncate rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-zinc-400 transition hover:border-red-400/30 hover:bg-red-400/10 hover:text-red-300"
+            >
+              {index + 1}. {hostname}
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function MessageBubble({ message, isNewest }) {
   const isUser = message.role === "user";
 
@@ -71,6 +108,7 @@ export function MessageBubble({ message, isNewest }) {
             >
               {message.content}
             </ReactMarkdown>
+            <SourcesList sources={message.sources} />
             <CopyMessageButton content={message.content} />
           </>
         )}

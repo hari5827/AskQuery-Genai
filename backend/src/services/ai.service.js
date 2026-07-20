@@ -29,6 +29,41 @@ const searchInternetTool = tool(
   }
 );
 
+// Pulls the raw Tavily results out of the agent's message trail and
+// turns them into a clean, de-duplicated { title, url } list.
+function extractSources(agentMessages) {
+  const sources = [];
+  const seenUrls = new Set();
+
+  for (const msg of agentMessages) {
+    const isSearchToolResult =
+      msg?.name === "searchInternet" ||
+      msg?.tool_call_id; // ToolMessage entries carry a tool_call_id
+
+    if (msg?.name !== "searchInternet") continue;
+    if (!isSearchToolResult) continue;
+
+    try {
+      const parsed = JSON.parse(msg.content);
+      const results = parsed?.results || [];
+
+      for (const r of results) {
+        if (r?.url && !seenUrls.has(r.url)) {
+          seenUrls.add(r.url);
+          sources.push({
+            title: r.title || r.url,
+            url: r.url,
+          });
+        }
+      }
+    } catch (err) {
+      // If the tool result wasn't valid JSON, just skip it silently.
+    }
+  }
+
+  return sources;
+}
+
 export async function generateResponse(messages, webSearchEnabled = false, userId = null) {
   console.log(messages);
 
@@ -92,7 +127,7 @@ export async function generateResponse(messages, webSearchEnabled = false, userI
 
   if (tools.length === 0) {
     const response = await mistralmodel.invoke(baseMessages);
-    return response.text;
+    return { text: response.text, sources: [] };
   }
 
   const agent = createAgent({
@@ -101,7 +136,10 @@ export async function generateResponse(messages, webSearchEnabled = false, userI
   });
 
   const response = await agent.invoke({ messages: baseMessages });
-  return response.messages[response.messages.length - 1].text;
+  const text = response.messages[response.messages.length - 1].text;
+  const sources = extractSources(response.messages);
+
+  return { text, sources };
 }
 
 export async function generateChatTitle(message) {

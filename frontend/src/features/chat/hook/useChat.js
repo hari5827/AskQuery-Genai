@@ -40,6 +40,7 @@ export const useChat = () => {
             chatId: chatId || chat._id,
             content: aiMessage.content,
             role: aiMessage.role,
+            sources: aiMessage.sources,
         }))
     } catch (error) {
         console.error("Failed to send message:", error)
@@ -78,6 +79,7 @@ export const useChat = () => {
             const formattedMessages = messages.map(msg => ({
                 content: msg.content,
                 role: msg.role,
+                sources: msg.sources || [],
             }))
 
             dispatch(addMessages({
@@ -101,5 +103,3 @@ export const useChat = () => {
         handleDeleteChat,
     }
 }
-
-    
