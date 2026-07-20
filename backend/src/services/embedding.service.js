@@ -5,10 +5,13 @@ const embeddings = new MistralAIEmbeddings({
   apiKey: process.env.MISTRAL_API_KEY,
 });
 
-export const generateEmbeddings = async (chunks) => {
-  const vectors = await embeddings.embedDocuments(
-    chunks.map((chunk) => chunk.pageContent)
-  );
+export const generateEmbeddings = async (data, isQuery = false) => {
 
-  return vectors;
+  if (isQuery) {
+    return await embeddings.embedQuery(data);
+  }
+
+  return await embeddings.embedDocuments(
+    data.map((chunk) => chunk.pageContent)
+  );
 };
