@@ -5,7 +5,8 @@ import { generateEmbeddings } from "../services/embedding.service.js";
 import { storeVectors } from "../services/vector.service.js";
 import { retrieveContext } from "../services/rag.service.js";
 import { generateAnswer } from "../services/chat.service.js";
-
+import fs from "fs";
+import { index } from "../config/pinecone.js"
 export const uploadDocument = async (req, res) => {
   try {
     if (!req.file) {
@@ -16,23 +17,18 @@ export const uploadDocument = async (req, res) => {
     }
      console.log("Logged in user:", req.user);
 
-    // Load PDF
+    
     const docs = await loadPDF(req.file.path);
-
-    // Split into chunks
     const chunks = await splitDocument(docs);
-
-    // Generate embeddings
     const vectors = await generateEmbeddings(chunks);
 
-    // Store vectors in Pinecone
     const records = await storeVectors(
       vectors,
       chunks,
       req.file.originalname
     );
 
-    // Save document metadata in MongoDB
+    
     await Document.create({
       user: req.user.id,
       originalName: req.file.originalname,
@@ -97,6 +93,70 @@ export const askQuestion = async (req, res) => {
   } catch (error) {
     console.error(error);
 
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+export const getDocuments = async (req, res) => {
+  try {
+    const documents = await Document.find({
+      user: req.user.id,
+    })
+      .select("originalName status createdAt")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      documents,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const deleteDocument = async (req, res) => {
+  try {
+    const { documentId } = req.params;
+
+    const document = await Document.findOne({
+      _id: documentId,
+      user: req.user.id,
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: "Document not found",
+      });
+    }
+
+    
+    await index.deleteMany({
+  ids: document.pineconeIds,
+});
+
+  
+    const filePath = `src/uploads/${document.fileName}`;
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    await Document.findByIdAndDelete(documentId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Document deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
     return res.status(500).json({
       success: false,
       message: error.message,
