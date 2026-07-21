@@ -27,7 +27,7 @@ export function ChatInput({
 
       <form
         onSubmit={onSubmit}
-        className="mx-auto flex max-w-4xl items-center gap-2 rounded-full border border-white/10 bg-[#111111] pl-2 pr-2 transition focus-within:border-red-600 sm:gap-3 sm:pl-2.5 sm:pr-2.5"
+        className="mx-auto flex max-w-4xl items-center gap-2 rounded-full border border-white/10 bg-[#111111] pl-2 transition focus-within:border-red-600 sm:gap-3 sm:pl-2.5"
       >
         <button
           type="button"
@@ -80,3 +80,4 @@ export function ChatInput({
 }
 
 export default ChatInput;
+

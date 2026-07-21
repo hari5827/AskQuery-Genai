@@ -1,6 +1,18 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import MessageBubble from "./MessageBubble";
 import ThinkingIndicator from "./ThinkingIndicator";
+
+// A few variants so the welcome screen doesn't say the exact same
+// thing every time — greeting always pairs with a matching subtitle.
+const WELCOME_MESSAGES = [
+  { greeting: "Good to see you,", subtitle: "How can I help you today?" },
+  { greeting: "Welcome back,", subtitle: "What are we working on today?" },
+  { greeting: "Hey there,", subtitle: "Ready when you are." },
+  { greeting: "Glad you're here,", subtitle: "Let's get started." },
+  { greeting: "Hello again,", subtitle: "What's on your mind?" },
+  { greeting: "Great to see you,", subtitle: "Ask anything, I'm listening." },
+  {greeting: "share your thoughts,", subtitle:"sharing is caring"},
+];
 
 export function ChatMessages({
   currentChatId,
@@ -14,6 +26,14 @@ export function ChatMessages({
 }) {
   const currentChat = currentChatId ? chats[currentChatId] : null;
   const scrollRef = useRef(null);
+
+  // Re-picks only when currentChatId changes (e.g. leaving a chat to
+  // start a new one) — not on every re-render, so it doesn't flicker
+  // while the user is just typing.
+  const welcomeMessage = useMemo(
+    () => WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)],
+    [currentChatId]
+  );
 
   // Auto-scroll to the latest message whenever the message list grows,
   // the AI starts/stops "thinking", or a brand-new chat's first
@@ -85,12 +105,12 @@ export function ChatMessages({
           <div className="flex h-full items-center justify-center py-16 sm:py-32">
             <div className="max-w-full text-center">
               <h1 className="break-words text-3xl font-bold tracking-tight sm:text-5xl">
-                <span className="text-white">Good to see you, </span>
+                <span className="text-white">{welcomeMessage.greeting} </span>
                 <span className="text-red-400">{user?.username || "there"}</span>
               </h1>
 
               <p className="mt-3 text-base text-zinc-500 sm:mt-5 sm:text-xl">
-                How can I help you today?
+                {welcomeMessage.subtitle}
               </p>
             </div>
           </div>
@@ -101,4 +121,3 @@ export function ChatMessages({
 }
 
 export default ChatMessages;
-
