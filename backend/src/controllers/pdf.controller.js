@@ -1,4 +1,6 @@
 import Document from "../models/document.model.js";
+import chatModel from "../models/chat.model.js";
+import messageModel from "../models/message.model.js";
 import { loadPDF } from "../services/pdf.service.js";
 import { splitDocument } from "../utils/splitDocument.js";
 import { generateEmbeddings } from "../services/embedding.service.js";
@@ -57,7 +59,7 @@ export const uploadDocument = async (req, res) => {
 
 export const askQuestion = async (req, res) => {
   try {
-    const { question, documentId } = req.body;
+    const { question, documentId, chatId } = req.body;
 
     if (!question) {
       return res.status(400).json({
@@ -78,6 +80,24 @@ export const askQuestion = async (req, res) => {
       });
     }
 
+    let chat = null;
+
+    if (!chatId) {
+      chat = await chatModel.create({
+        user: req.user.id,
+        title: document.originalName,
+        document: document._id,
+      });
+    }
+
+    const targetChatId = chatId || chat._id;
+
+    await messageModel.create({
+      chat: targetChatId,
+      content: question,
+      role: "user",
+    });
+
     const context = await retrieveContext(
       question,
       document.originalName
@@ -85,9 +105,16 @@ export const askQuestion = async (req, res) => {
 
     const answer = await generateAnswer(context, question);
 
+    const aiMessage = await messageModel.create({
+      chat: targetChatId,
+      content: answer,
+      role: "ai",
+    });
+
     return res.status(200).json({
       success: true,
-      answer,
+      chat,
+      aiMessage,
     });
 
   } catch (error) {

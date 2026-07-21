@@ -7,10 +7,10 @@ import { CodeBlock } from "./CodeBlock";
 import { CopyMessageButton } from "./CopyMessageButton";
 
 const markdownComponents = {
-  p: ({ children }) => <p className="mb-3 leading-7 last:mb-0">{children}</p>,
-  ul: ({ children }) => <ul className="mb-3 list-disc pl-6">{children}</ul>,
-  ol: ({ children }) => <ol className="mb-3 list-decimal pl-6">{children}</ol>,
-  li: ({ children }) => <li className="mb-1">{children}</li>,
+  p: ({ children }) => <p className="mb-4 leading-7 last:mb-0">{children}</p>,
+  ul: ({ children }) => <ul className="mb-4 list-disc space-y-1.5 pl-6">{children}</ul>,
+  ol: ({ children }) => <ol className="mb-4 list-decimal space-y-1.5 pl-6">{children}</ol>,
+  li: ({ children }) => <li className="leading-7">{children}</li>,
   code: ({ className, children, ...props }) => {
     const isInline = !className;
     if (isInline) {
@@ -90,8 +90,8 @@ export function MessageBubble({ message, isNewest }) {
       <div
         className={
           isUser
-            ? "max-w-[85%] rounded-3xl rounded-br-lg bg-gradient-to-r from-red-700 to-red-600 px-4 py-3 text-white shadow-lg shadow-red-900/20 sm:max-w-[520px] sm:px-5"
-            : "max-w-[85%] rounded-3xl rounded-bl-lg border border-white/5 bg-[#111111] px-4 py-4 text-zinc-200 sm:max-w-[800px] sm:px-6 sm:py-5"
+            ? "max-w-[85%] rounded-3xl rounded-br-lg bg-gradient-to-r from-red-700 to-red-600 px-5 py-3.5 text-white shadow-lg shadow-red-900/20 sm:max-w-[520px] sm:px-6"
+            : "max-w-[85%] rounded-3xl rounded-bl-lg border border-white/5 bg-[#111111] px-5 py-5 text-zinc-200 sm:max-w-[800px] sm:px-7 sm:py-6"
         }
       >
         {isUser ? (
@@ -118,3 +118,4 @@ export function MessageBubble({ message, isNewest }) {
 }
 
 export default MessageBubble;
+

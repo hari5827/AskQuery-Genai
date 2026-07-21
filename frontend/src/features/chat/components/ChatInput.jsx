@@ -1,5 +1,7 @@
 import React from "react";
 import { Globe, Send } from "lucide-react";
+import UploadDocumentButton from "../../pdf/components/UploadDocumentButton";
+import SelectedDocumentChip from "../../pdf/components/SelectedDocumentChip";
 
 export function ChatInput({
   chatInput,
@@ -8,12 +10,24 @@ export function ChatInput({
   setWebSearchOn,
   onSubmit,
   isLoading,
+  selectedDocument,
+  onDeselectDocument,
+  uploadStatus,
+  uploadError,
+  onFileSelected,
+  onInvalidFile,
+  onResetUploadStatus,
 }) {
   return (
-    <footer className="border-t border-white/5 bg-[#090909] p-3 sm:p-5">
+    <footer className="border-t border-white/5 bg-[#090909] p-4 sm:p-6">
+      <SelectedDocumentChip
+        documentName={selectedDocument?.originalName}
+        onDeselect={onDeselectDocument}
+      />
+
       <form
         onSubmit={onSubmit}
-        className="mx-auto flex max-w-4xl items-center gap-1.5 rounded-full border border-white/10 bg-[#111111] pl-1.5 pr-1.5 transition focus-within:border-red-600 sm:gap-3 sm:pl-2 sm:pr-2"
+        className="mx-auto flex max-w-4xl items-center gap-2 rounded-full border border-white/10 bg-[#111111] pl-2 pr-2 transition focus-within:border-red-600 sm:gap-3 sm:pl-2.5 sm:pr-2.5"
       >
         <button
           type="button"
@@ -29,11 +43,25 @@ export function ChatInput({
           <Globe size={20} className="hidden sm:block" />
         </button>
 
+        <UploadDocumentButton
+          onFileSelected={onFileSelected}
+          onInvalidFile={onInvalidFile}
+          uploadStatus={uploadStatus}
+          uploadError={uploadError}
+          onResetStatus={onResetUploadStatus}
+        />
+
         <input
           type="text"
           value={chatInput}
           onChange={(e) => setChatInput(e.target.value)}
-          placeholder={webSearchOn ? "Web search on" : "Ask me anything..."}
+          placeholder={
+            selectedDocument
+              ? "Ask about this document..."
+              : webSearchOn
+              ? "Web search on"
+              : "Ask me anything..."
+          }
           disabled={isLoading}
           className="min-w-0 flex-1 bg-transparent py-2.5 text-sm outline-none placeholder:text-zinc-500 disabled:opacity-50 sm:py-3 sm:text-base"
         />
@@ -41,7 +69,7 @@ export function ChatInput({
         <button
           type="submit"
           disabled={!chatInput.trim() || isLoading}
-          className="flex shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-red-700 to-red-600 p-2.5 font-semibold transition hover:from-red-600 hover:to-red-500 disabled:cursor-not-allowed disabled:opacity-40 sm:px-6 sm:py-3"
+          className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-red-600 to-red-500 px-4 py-2.5 font-semibold text-white transition hover:from-red-500 hover:to-red-400 disabled:cursor-not-allowed disabled:from-red-950 disabled:to-red-950 disabled:text-red-300/50 sm:px-6 sm:py-3"
         >
           <Send size={18} className="sm:hidden" />
           <span className="hidden sm:inline">Send</span>

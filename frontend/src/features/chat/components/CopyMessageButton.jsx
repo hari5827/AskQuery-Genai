@@ -22,7 +22,7 @@ export function CopyMessageButton({ content, variant = "dark" }) {
   return (
     <button
       onClick={handleCopy}
-      className={`mt-3 flex items-center gap-1.5 text-xs transition ${colorClasses}`}
+      className={`mt-4 flex items-center gap-1.5 text-xs transition ${colorClasses}`}
     >
       {copied ? (
         <>
@@ -40,3 +40,4 @@ export function CopyMessageButton({ content, variant = "dark" }) {
 }
 
 export default CopyMessageButton;
+

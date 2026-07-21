@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useChat } from "../hook/useChat";
 import { useAuth } from "../../auth/hook/useAuth";
+import { usePdf } from "../../pdf/hook/usePdf";
 import logo from "../../../app/askquery-logo.svg";
 import "katex/dist/katex.min.css";
 
@@ -13,9 +14,11 @@ import DeleteChatModal from "../components/models/DeleteChatModal";
 import LogoutModal from "../components/models/LogoutModal";
 import DeleteAccountModal from "../components/models/DeleteAccountModal";
 import LogoutToast from "../components/models/LogoutToast";
+import DeleteDocumentModal from "../../pdf/components/models/DeleteDocumentModal";
 
 const Dashboard = () => {
   const chat = useChat();
+  const pdf = usePdf();
   const { handleLogout, handleDeleteAccount } = useAuth();
 
   const [chatInput, setChatInput] = useState("");
@@ -27,7 +30,14 @@ const Dashboard = () => {
   const user = useSelector((state) => state.auth.user);
   const isLoading = useSelector((state) => state.chat.isLoading);
 
+  const documents = useSelector((state) => state.pdf.documents);
+  const selectedDocumentId = useSelector((state) => state.pdf.selectedDocumentId);
+  const uploadStatus = useSelector((state) => state.pdf.uploadStatus);
+  const uploadError = useSelector((state) => state.pdf.uploadError);
+  const selectedDocument = selectedDocumentId ? documents[selectedDocumentId] : null;
+
   const [chatToDelete, setChatToDelete] = useState(null);
+  const [documentToDelete, setDocumentToDelete] = useState(null);
   const {
     initializeSocketConnection,
     handleGetChats,
@@ -62,6 +72,7 @@ const Dashboard = () => {
   useEffect(() => {
     initializeSocketConnection();
     handleGetChats();
+    pdf.handleGetDocuments();
   }, []);
 
   const handleSubmitMessage = async (event) => {
@@ -70,11 +81,32 @@ const Dashboard = () => {
     const trimmedMessage = chatInput.trim();
     if (!trimmedMessage) return;
 
+    setChatInput("");
+
+    // When a document is selected, questions go through the PDF
+    // Q&A flow instead of the normal chats API. Continue the same
+    // chat thread only if we're already viewing that document's chat.
+    if (selectedDocumentId) {
+      const isExistingDocChat =
+        currentChatId && chats[currentChatId]?.documentId === selectedDocumentId;
+
+      if (!isExistingDocChat) {
+        setPendingFirstMessage(trimmedMessage);
+      }
+
+      await chat.handleAskDocument({
+        question: trimmedMessage,
+        chatId: isExistingDocChat ? currentChatId : null,
+        documentId: selectedDocumentId,
+      });
+
+      setPendingFirstMessage(null);
+      return;
+    }
+
     if (!currentChatId) {
       setPendingFirstMessage(trimmedMessage);
     }
-
-    setChatInput("");
 
     await chat.handleSendMessage({
       message: trimmedMessage,
@@ -111,6 +143,10 @@ const Dashboard = () => {
           onLogoutClick={() => setModalType("logout")}
           onDeleteAccountClick={() => setModalType("delete")}
           logo={logo}
+          documents={documents}
+          selectedDocumentId={selectedDocumentId}
+          onSelectDocument={pdf.handleSelectDocument}
+          onRequestDeleteDocument={setDocumentToDelete}
         />
 
         <section className="flex h-full flex-1 flex-col border-0 border-white/5 bg-[#090909] sm:rounded-3xl sm:border">
@@ -138,6 +174,13 @@ const Dashboard = () => {
             setWebSearchOn={setWebSearchOn}
             onSubmit={handleSubmitMessage}
             isLoading={isLoading}
+            selectedDocument={selectedDocument}
+            onDeselectDocument={pdf.handleDeselectDocument}
+            uploadStatus={uploadStatus}
+            uploadError={uploadError}
+            onFileSelected={pdf.handleUploadDocument}
+            onInvalidFile={pdf.handleInvalidFile}
+            onResetUploadStatus={pdf.handleResetUploadStatus}
           />
         </section>
       </div>
@@ -148,6 +191,15 @@ const Dashboard = () => {
         onConfirm={async (chatId) => {
           await handleDeleteChat(chatId);
           setChatToDelete(null);
+        }}
+      />
+
+      <DeleteDocumentModal
+        documentId={documentToDelete}
+        onCancel={() => setDocumentToDelete(null)}
+        onConfirm={async (documentId) => {
+          await pdf.handleDeleteDocument(documentId);
+          setDocumentToDelete(null);
         }}
       />
 

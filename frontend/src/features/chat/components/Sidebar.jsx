@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { X, Settings, LogOut, Trash2, Search } from "lucide-react";
+import DocumentsList from "../../pdf/components/DocumentsList";
 
 // Formats a chat's last-updated timestamp: just the time if it was
 // today, otherwise a short date + time.
@@ -30,6 +31,10 @@ export function Sidebar({
   onLogoutClick,
   onDeleteAccountClick,
   logo,
+  documents,
+  selectedDocumentId,
+  onSelectDocument,
+  onRequestDeleteDocument,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -103,8 +108,8 @@ export function Sidebar({
 
       {/* Chat List */}
 
-      <div className="w-[260px] flex-1 overflow-y-auto p-4">
-        <div className="relative mb-4">
+      <div className="w-[260px] flex-1 overflow-y-auto p-5">
+        <div className="relative mb-6">
           <Search
             size={15}
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"
@@ -114,15 +119,15 @@ export function Sidebar({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search chats..."
-            className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-2 pl-9 pr-3 text-sm outline-none transition placeholder:text-zinc-500 focus:border-red-600"
+            className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-2.5 pl-9 pr-3 text-sm outline-none transition placeholder:text-zinc-500 focus:border-red-600"
           />
         </div>
 
-        <p className="mb-3 text-xs uppercase tracking-[2px] text-zinc-500">
+        <p className="mb-4 text-xs uppercase tracking-[2px] text-zinc-500">
           Recent Chats
         </p>
 
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {Object.values(chats)
             .filter((chatItem) =>
               (chatItem.title || "")
@@ -133,7 +138,7 @@ export function Sidebar({
             <div key={chatItem.id} className="group relative">
               <button
                 onClick={() => onOpenChat(chatItem.id)}
-                className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 pr-9 text-left transition-all duration-200 ${
+                className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3.5 pr-9 text-left transition-all duration-200 ${
                   currentChatId === chatItem.id
                     ? "border border-red-700/30 bg-red-700/10"
                     : "hover:bg-white/5"
@@ -168,6 +173,13 @@ export function Sidebar({
             </div>
           ))}
         </div>
+
+        <DocumentsList
+          documents={documents}
+          selectedDocumentId={selectedDocumentId}
+          onSelectDocument={onSelectDocument}
+          onRequestDeleteDocument={onRequestDeleteDocument}
+        />
       </div>
 
       {/* User */}
@@ -228,3 +240,5 @@ export function Sidebar({
 }
 
 export default Sidebar;
+
+

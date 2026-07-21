@@ -1,5 +1,6 @@
 import { initializeSocketConnection } from "../service/chat.socket";
 import { sendMessage, getChats, getMessages, deleteChat } from "../service/chat.api";
+import { askDocument } from "../../pdf/service/pdf.api";
 import { setChats, setCurrentChatId, setError, setLoading, createNewChat, addNewMessage, addMessages, clearCurrentChat,removeChat } from "../chat.slice";
 import { useDispatch } from "react-redux";
 
@@ -58,6 +59,7 @@ export const useChat = () => {
             acc[chat._id] = {
                 id: chat._id,
                 title: chat.title,
+                documentId: chat.document || null,
                 messages: [],
                 lastUpdated: chat.updatedAt,
             }
@@ -69,9 +71,55 @@ export const useChat = () => {
     await deleteChat(chatId);
     dispatch(removeChat(chatId));
 }
-    async function handleOpenChat(chatId, chats) {
-        console.log(chats[chatId]?.messages.length)
 
+    // PDF document Q&A is persisted through the same Chat/Message
+    // records the normal chat flow uses (backend creates/reuses a
+    // Chat linked to the document), so it mirrors handleSendMessage
+    // above and survives refresh via GET /api/chats like any other
+    // conversation.
+    async function handleAskDocument({ question, chatId, documentId }) {
+        dispatch(setLoading(true))
+
+        if (chatId) {
+            dispatch(addNewMessage({
+                chatId,
+                content: question,
+                role: "user",
+            }))
+        }
+
+        try {
+            const data = await askDocument({ question, documentId, chatId })
+            const { chat, aiMessage } = data
+
+            if (!chatId) {
+                dispatch(createNewChat({
+                    chatId: chat._id,
+                    title: chat.title,
+                    documentId,
+                }))
+                dispatch(addNewMessage({
+                    chatId: chat._id,
+                    content: question,
+                    role: "user",
+                }))
+                dispatch(setCurrentChatId(chat._id))
+            }
+
+            dispatch(addNewMessage({
+                chatId: chatId || chat._id,
+                content: aiMessage.content,
+                role: aiMessage.role,
+            }))
+        } catch (error) {
+            console.error("Failed to ask document:", error)
+            dispatch(setError(error?.response?.data?.message || "Something went wrong"))
+        } finally {
+            dispatch(setLoading(false))
+        }
+    }
+
+    async function handleOpenChat(chatId, chats) {
         if (chats[chatId]?.messages.length === 0) {
             const data = await getMessages(chatId)
             const { messages } = data
@@ -101,5 +149,6 @@ export const useChat = () => {
         handleOpenChat,
         handleClearCurrentChat,
         handleDeleteChat,
+        handleAskDocument,
     }
 }
