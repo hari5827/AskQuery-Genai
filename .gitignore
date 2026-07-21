@@ -1,7 +1,8 @@
 
 
 
-backend/src/uploads/
+backend/src/uploads/*
+!backend/src/uploads/.gitkeep
 backend/node_modules
 frontend/node_modules
 
