@@ -1,13 +1,23 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Link ,useNavigate,Navigate} from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
+import LoginTransition from "../components/LoginTransition";
 import { useSelector } from 'react-redux'
 import { useAuth } from '../hook/useAuth'
+import { store } from '../../../app/app.store'
 
 const Login = () => {
     const [ email, setEmail ] = useState('')
     const [ password, setPassword ] = useState('')
     const [showPassword, setShowPassword] = useState(false)
+    const [showTransition, setShowTransition] = useState(false)
+    // handleLogin's own setLoading(false)/setUser() dispatches cause a
+    // re-render before this function's next line runs — that re-render
+    // would otherwise hit the "already logged in" redirect below before
+    // we get a chance to set showTransition. This flag suppresses that
+    // redirect once a submit is in flight, so only our own transition
+    // controls navigation after a fresh login.
+    const justSubmittedRef = useRef(false)
     const user = useSelector(state => state.auth.user)
     const loading = useSelector(state => state.auth.loading)
 
@@ -23,12 +33,24 @@ const Login = () => {
             password,
         }
 
+        justSubmittedRef.current = true
         await handleLogin(payload)
-        navigate("/")
+
+        // handleLogin catches its own errors, so check the live store
+        // state to know whether it actually succeeded before animating.
+        if (store.getState().auth.user) {
+            setShowTransition(true)
+        } else {
+            justSubmittedRef.current = false
+        }
 
     }
 
-    if(!loading && user){
+    if (showTransition) {
+        return <LoginTransition onComplete={() => navigate("/")} />
+    }
+
+    if(!loading && user && !justSubmittedRef.current){
         return <Navigate to="/" replace />
     }
 
@@ -36,25 +58,25 @@ const Login = () => {
         <AuthLayout title="Welcome back" subtitle="Sign in to your account">
             <form onSubmit={submitForm} className="space-y-4">
                 <label className="block">
-                    <span className="text-sm text-gray-300">Email</span>
+                    <span className="text-sm text-zinc-400">Email</span>
                     <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="mt-1 block w-full px-4 py-3 rounded-xl bg-white/5 border border-white/8 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+                        className="mt-1 block w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-zinc-500 outline-none transition focus:border-red-600"
                         placeholder="Enter your email"
                     />
                 </label>
 
                 <label className="block relative">
-                    <span className="text-sm text-gray-300">Password</span>
+                    <span className="text-sm text-zinc-400">Password</span>
                     <input
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="mt-1 block w-full pr-14 px-4 py-3 rounded-xl bg-white/5 border border-white/8 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+                        className="mt-1 block w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 pr-14 text-white placeholder-zinc-500 outline-none transition focus:border-red-600"
                         placeholder="********"
                     />
 
@@ -62,7 +84,7 @@ const Login = () => {
                         type="button"
                         onClick={() => setShowPassword((s) => !s)}
                         aria-label={showPassword ? "Hide password" : "Show password"}
-                        className="absolute right-3 top-[38px] inline-flex items-center justify-center text-gray-300 hover:text-gray-100"
+                        className="absolute right-3 top-[38px] inline-flex items-center justify-center text-zinc-500 hover:text-white"
                     >
                         {showPassword ? (
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -80,14 +102,14 @@ const Login = () => {
                 <div className="pt-2">
                     <button
                         type="submit"
-                        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-purple-500 text-white font-semibold shadow-md hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-700 to-red-600 px-6 py-3 font-semibold text-white shadow-md transition hover:from-red-600 hover:to-red-500"
                     >
                         Sign In
                     </button>
                 </div>
-                <div className="mt-4 text-center text-sm text-gray-400">
+                <div className="mt-4 text-center text-sm text-zinc-500">
                     <span>New here? </span>
-                    <Link to="/register" className="text-purple-300 hover:text-purple-100 font-medium">
+                    <Link to="/register" className="font-medium text-red-400 hover:text-red-300">
                         Create an account
                     </Link>
                 </div>

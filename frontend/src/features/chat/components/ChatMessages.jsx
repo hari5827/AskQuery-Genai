@@ -11,7 +11,6 @@ const WELCOME_MESSAGES = [
   { greeting: "Glad you're here,", subtitle: "Let's get started." },
   { greeting: "Hello again,", subtitle: "What's on your mind?" },
   { greeting: "Great to see you,", subtitle: "Ask anything, I'm listening." },
-  {greeting: "share your thoughts,", subtitle:"sharing is caring"},
 ];
 
 export function ChatMessages({
@@ -45,8 +44,8 @@ export function ChatMessages({
   }, [currentChatId, currentChat?.messages?.length, isLoading, pendingFirstMessage]);
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto">
-      <div className="mx-auto flex w-full max-w-5xl flex-col space-y-5 px-4 py-8 pb-32 sm:space-y-7 sm:px-8 sm:py-10 sm:pb-40">
+    <div ref={scrollRef} className="min-w-0 flex-1 overflow-y-auto">
+      <div className="mx-auto flex w-full max-w-5xl flex-col space-y-5 px-4 py-8 sm:space-y-7 sm:px-8 sm:py-10">
         {currentChatId ? (
           <>
             {currentChat?.messages?.map((message, index) => (
@@ -59,7 +58,7 @@ export function ChatMessages({
 
             {isLoading && (
               <div className="flex justify-start">
-                <div className="max-w-[85%] rounded-3xl rounded-bl-lg border border-white/5 bg-[#111111] px-5 py-5 text-zinc-200 sm:max-w-[800px] sm:px-7 sm:py-6">
+                <div className="max-w-[92%] rounded-3xl rounded-bl-lg border border-white/5 bg-[#111111] px-4 py-4 text-zinc-200 sm:max-w-[800px] sm:px-7 sm:py-6">
                   <ThinkingIndicator searching={webSearchOn} />
                 </div>
               </div>
@@ -88,15 +87,15 @@ export function ChatMessages({
         ) : pendingFirstMessage ? (
           <div className="flex flex-col space-y-5 sm:space-y-7">
             <div className="flex animate-message-in justify-end">
-              <div className="max-w-[85%] rounded-3xl rounded-br-lg bg-gradient-to-r from-red-700 to-red-600 px-5 py-3.5 text-white shadow-lg shadow-red-900/20 sm:max-w-[520px] sm:px-6">
-                <p className="whitespace-pre-wrap leading-7">
+              <div className="max-w-[88%] rounded-3xl rounded-br-lg bg-gradient-to-r from-red-700 to-red-600 px-4 py-3 text-sm text-white shadow-lg shadow-red-900/20 sm:max-w-[520px] sm:px-6 sm:py-3.5 sm:text-base">
+                <p className="whitespace-pre-wrap leading-6 sm:leading-7">
                   {pendingFirstMessage}
                 </p>
               </div>
             </div>
 
             <div className="flex justify-start">
-              <div className="max-w-[85%] rounded-3xl rounded-bl-lg border border-white/5 bg-[#111111] px-5 py-5 text-zinc-200 sm:max-w-[800px] sm:px-7 sm:py-6">
+              <div className="max-w-[92%] rounded-3xl rounded-bl-lg border border-white/5 bg-[#111111] px-4 py-4 text-zinc-200 sm:max-w-[800px] sm:px-7 sm:py-6">
                 <ThinkingIndicator searching={webSearchOn} />
               </div>
             </div>

@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+html, body {
+  background-color: #050505;
+  height: 100%;
+}
+
 
 @keyframes messageIn {
   from {
@@ -14,6 +19,52 @@
 
 .animate-message-in {
   animation: messageIn 0.25s ease-out;
+}
+
+
+@keyframes logoIn {
+  from {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-logo-in {
+  animation: logoIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes textIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-text-in {
+  animation: textIn 0.4s ease-out 0.25s both;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 1.4s ease-in-out infinite;
 }
 
 

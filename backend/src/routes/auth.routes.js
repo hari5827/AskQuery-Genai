@@ -2,10 +2,11 @@ import Router from "express";
 import { loginValidator, registerValidator } from "../validator/auth.validator.js";
 import { register ,login,verifyEmail,getMe,resendVerificationEmail,logout,deleteAccount} from "../controllers/auth.controller.js";
 import { authUser } from "../middleware/auth.middleware.js";
+import { loginLimiter , registerLimiter } from "../middleware/rateLimit.middleware.js";
 
 const authRouter = Router();
-authRouter.post("/register", registerValidator, register);
-authRouter.post("/login", loginValidator, login)
+authRouter.post("/register", registerValidator, registerLimiter, register);
+authRouter.post("/login", loginValidator, loginLimiter, login)
 authRouter.get('/verify-email', verifyEmail)
 authRouter.post("/resend-verification", resendVerificationEmail);
 authRouter.get('/get-me', authUser, getMe)

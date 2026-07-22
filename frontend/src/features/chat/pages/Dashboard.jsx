@@ -122,7 +122,7 @@ const Dashboard = () => {
   };
 
   return (
-    <main className="h-screen overflow-hidden bg-[#050505] text-white">
+    <main className="h-dvh overflow-hidden bg-[#050505] text-white">
       {/* Background */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute -top-40 left-0 h-96 w-96 rounded-full bg-red-700/5 blur-[160px]" />
@@ -149,7 +149,7 @@ const Dashboard = () => {
           onRequestDeleteDocument={setDocumentToDelete}
         />
 
-        <section className="flex h-full flex-1 flex-col border-0 border-white/5 bg-[#090909] sm:rounded-3xl sm:border">
+        <section className="flex h-full min-w-0 flex-1 flex-col border-0 border-white/5 bg-[#090909] sm:rounded-3xl sm:border">
           <ChatHeader
             title={currentChatId ? chats[currentChatId]?.title : "New Conversation"}
             sidebarOpen={sidebarOpen}

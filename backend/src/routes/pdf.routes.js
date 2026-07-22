@@ -2,8 +2,9 @@ import express from "express";
 import { upload } from "../middleware/upload.middleware.js";
 import { askQuestion, getDocuments, deleteDocument,uploadDocument } from "../controllers/pdf.controller.js";
 import { authUser } from "../middleware/auth.middleware.js";
+import { askLimiter ,uploadLimiter } from "../middleware/rateLimit.middleware.js";
 const router = express.Router();
-router.post("/upload", authUser, (req, res, next) => {
+router.post("/upload", authUser,  uploadLimiter,(req, res, next) => {
     upload.single("document")(req, res, (err) => {
 
         if (err) {
@@ -24,7 +25,7 @@ router.post("/upload", authUser, (req, res, next) => {
         next();
     });
 }, uploadDocument);
-router.post("/ask", authUser, askQuestion);
+router.post("/ask", authUser, askLimiter,askQuestion);
 
 router.get("/documents", authUser, getDocuments);
 

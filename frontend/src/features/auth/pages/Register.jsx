@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
+import LoginTransition from "../components/LoginTransition";
 import { useAuth } from "../hook/useAuth";
 import { useNavigate } from "react-router-dom";
 const Register = () => {
@@ -8,49 +9,55 @@ const Register = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [showTransition, setShowTransition] = useState(false);
     const { handleRegister } = useAuth();
   
     const navigate = useNavigate();
    const handleSubmit = async (e) => {
   e.preventDefault();
   await handleRegister({ email, username, password });
-  navigate("/"); // or wherever you want after register
+  setShowTransition(true);
 };
+
+    if (showTransition) {
+        return <LoginTransition onComplete={() => navigate("/")} />
+    }
+
     return (
         <AuthLayout title="Create account" subtitle="Join and Solve your queries">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <label className="block">
-                    <span className="text-sm text-gray-300">Username</span>
+                    <span className="text-sm text-zinc-400">Username</span>
                     <input
                         type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         required
-                        className="mt-1 block w-full px-4 py-3 rounded-xl bg-white/5 border border-white/8 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+                        className="mt-1 block w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-zinc-500 outline-none transition focus:border-red-600"
                         placeholder="Enter your username"
                     />
                 </label>
 
                 <label className="block">
-                    <span className="text-sm text-gray-300">Email</span>
+                    <span className="text-sm text-zinc-400">Email</span>
                     <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="mt-1 block w-full px-4 py-3 rounded-xl bg-white/5 border border-white/8 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+                        className="mt-1 block w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-zinc-500 outline-none transition focus:border-red-600"
                         placeholder="Enter your email"
                     />
                 </label>
 
                 <label className="block relative">
-                    <span className="text-sm text-gray-300">Password</span>
+                    <span className="text-sm text-zinc-400">Password</span>
                     <input
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="mt-1 block w-full pr-14 px-4 py-3 rounded-xl bg-white/5 border border-white/8 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+                        className="mt-1 block w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 pr-14 text-white placeholder-zinc-500 outline-none transition focus:border-red-600"
                         placeholder="********"
                     />
 
@@ -58,7 +65,7 @@ const Register = () => {
                         type="button"
                         onClick={() => setShowPassword((s) => !s)}
                         aria-label={showPassword ? "Hide password" : "Show password"}
-                        className="absolute right-3 top-[38px] inline-flex items-center justify-center text-gray-300 hover:text-gray-100"
+                        className="absolute right-3 top-[38px] inline-flex items-center justify-center text-zinc-500 hover:text-white"
                     >
                         {showPassword ? (
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -76,14 +83,14 @@ const Register = () => {
                 <div className="pt-2">
                     <button
                         type="submit"
-                        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-purple-500 text-white font-semibold shadow-md hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-700 to-red-600 px-6 py-3 font-semibold text-white shadow-md transition hover:from-red-600 hover:to-red-500"
                     >
                         Create account
                     </button>
                 </div>
-                <div className="mt-4 text-center text-sm text-gray-400">
+                <div className="mt-4 text-center text-sm text-zinc-500">
                     <span>Already have an account? </span>
-                    <Link to="/login" className="text-purple-300 hover:text-purple-100 font-medium">
+                    <Link to="/login" className="font-medium text-red-400 hover:text-red-300">
                         Sign in
                     </Link>
                 </div>
