@@ -1,6 +1,5 @@
 AskQuery – AI Document Assistant using RAG
-
-AskQuery is an AI-powered document assistant that enables users to upload PDFs and interact with them using Retrieval-Augmented Generation (RAG). It combines semantic search, vector embeddings, and LLMs to provide context-aware answers while maintaining chat history and secure authentication.
+AskQuery is a full-stack AI-powered document assistant that allows users to upload PDF documents and interact with them using Retrieval-Augmented Generation (RAG). The application combines semantic search, vector embeddings, large language models, and internet search to generate accurate, context-aware responses while maintaining secure authentication and persistent chat history
 
 <div align="center">
 
@@ -17,95 +16,287 @@ AskQuery is an AI-powered document assistant that enables users to upload PDFs a
 </div>
 
 
-##  Features
+ **Highlights**
 
--  **JWT Authentication** — Secure login/register with HTTP-only cookies and email verification.
--  **AI Assistant** — Full-featured chat experience integrated with internet search capabilities.
--  **PDF Management** — Upload, view, and delete documents seamlessly.
--  **Chat with PDFs (RAG)** — Query uploaded documents with precise context powered by Pinecone & Mistral AI.
--  **Semantic Search** — LangChain chunking,Mistral embeddings,Pinecone vector retrieval
--  **Chat History** — Persistent chat sessions stored in MongoDB.
+• Secure JWT Authentication
+• Email Verification using Gmail OAuth
+• PDF Upload & Management
+• Retrieval-Augmented Generation (RAG)
+• Semantic Search with Pinecone
+• Mistral Embeddings
+• LangChain Pipeline
+• Internet Search (Tavily)
+• Persistent Chat History
+• Markdown + Code Rendering
+• Mathematical Formula Rendering (KaTeX)
+• Syntax Highlighting
+• Responsive UI
 
-**Tech Stack**
-
+###**Tech Stack**
 
 ### **Frontend**
-- **Framework:** React, React Router
+
+- **Framework:** React 19, React Router DOM
 - **State Management:** Redux Toolkit
 - **Styling:** Tailwind CSS
 - **Networking:** Axios
+- **Markdown Rendering:** React Markdown
+- **Math Rendering:** KaTeX, remark-math, rehype-katex
+- **Code Highlighting:** React Syntax Highlighter
+- **Notifications:** React Hot Toast
+- **Icons:** Lucide React
+- **Build Tool:** Vite
 
 ### **Backend**
+
 - **Runtime:** Node.js, Express.js
 - **Database:** MongoDB, Mongoose
-- **Auth & Files:** JWT, Multer
-- **Real-Time:** Socket.io
+- **Authentication:** JWT, HTTP-Only Cookies
+- **Email Service:** Nodemailer (Gmail OAuth2)
+- **File Upload:** Multer
+- **Validation:** Validator
+- **Security:** CORS, Cookie Parser, Express Rate Limit
+- **Environment Management:** dotenv
 
 ### **AI & RAG Pipeline**
+
 - **Framework:** LangChain
 - **LLM:** Mistral AI
+- **Embedding Model:** Mistral Embeddings
 - **Vector Database:** Pinecone
-- **Text Splitter:** `RecursiveCharacterTextSplitter`
+- **Document Parsing:** pdf-parse
+- **Text Splitting:** RecursiveCharacterTextSplitter
+- **Internet Search:** Tavily Search API
 
-**System Architecture**
+### **Development Tools**
 
+- **Version Control:** Git, GitHub
+- **Package Manager:** npm
+- **API Testing:** Postman
 
- <img width="887" height="271" alt="image" src="https://github.com/user-attachments/assets/a8c44dfd-c2c8-4ca1-9732-b33ec7386672" />
-
-
-                                            
-
-  **RAG Pipeline Flow**
-
- <img width="762" height="202" alt="image" src="https://github.com/user-attachments/assets/505d4158-0245-40bd-9a41-ba05b2bd9278" />
+###**workflow diagram**
 
 
+## 🏗️ Application Workflow
 
+```mermaid
+flowchart TD
 
-**Getting Started
-Prerequisites**
-Node.js (v18+)
-MongoDB Instance
-Pinecone API Key
-Mistral AI API Key 
-Gemini AI API Key
-Gmail api key
+A[User] --> B[Register / Login]
+B --> C[JWT Authentication]
+C --> D[Chat Dashboard]
 
+D --> E{Choose Mode}
 
-**Environment Configuration**
+E -->|Internet Search| F[Ask Question]
 
-mongo_uri 
-GOOGLE_CLIENT_ID= your_pi_key
-GOOGLE_CLIENT_SECRET= your_client secret key
-GOOGLE_REFRESH_TOKEN= your_refresh_token
-GOOGLE_USER=user
-JWT_SECRET= your_secret_key
-ASKQUERY_API_KEY= your_gemini_api_key
-MISTRAL_API_KEY= mistral_api_key
-PORT=3000
-TAVILY_API_KEY= your_tavily_api_key
-PINECONE_API_KEY= your_pinecone_api_key
+E -->|PDF Chat| G[Upload PDF]
 
-**Project Structure**
+G --> H[Validate PDF]
+H --> I[Store PDF]
+I --> J[Extract Text]
+J --> K[Split into Chunks]
+K --> L[Generate Embeddings]
+L --> M[Store Vectors in Pinecone]
+M --> N[Save Metadata in MongoDB]
 
-<img width="770" height="556" alt="image" src="https://github.com/user-attachments/assets/ae37a89a-8d9d-402f-88ba-5767f9c17d9a" />
+N --> F
 
+F --> O[Embed User Query]
+O --> P[Semantic Search]
+P --> Q[Retrieve Relevant Chunks]
+Q --> R[Build Prompt]
+R --> S[Mistral AI]
+S --> T[Generate AI Response]
+T --> U[Save Chat History]
+U --> V[Display Response]
+```
+- **Code Editor:** Visual Studio Code
 
+- ## 🔐 Authentication Flow
 
-**Project metrics**
+```mermaid
+flowchart TD
 
-<img width="353" height="386" alt="image" src="https://github.com/user-attachments/assets/e95d39c6-496a-4fab-8d20-a18087dbc59d" />
+A[User] --> B[Register]
+B --> C[Validate User Data]
+C --> D[Create Account]
+D --> E[Send Verification Email]
+E --> F[Verify Email]
 
+F --> G[Login]
 
+G --> H[Validate Credentials]
 
+H --> I[Generate JWT]
 
-##  Roadmap & Future Enhancements
+I --> J[Store HTTP Only Cookie]
 
-- [x] JWT Authentication
-- [x] PDF Upload
-- [x] Chat History
-- [x] Semantic Search
-- [ ] OCR Support
-- [ ] Docker
-- [ ] Streaming Responses
-- [ ] Multi PDF Chat
+J --> K[Protected Routes]
+
+K --> L[Dashboard]
+```
+
+## 📄 PDF Processing Workflow
+
+```mermaid
+flowchart TD
+
+A[Upload PDF]
+
+A --> B[Validate File]
+
+B --> C[Store File]
+
+C --> D[Extract Text]
+
+D --> E[Split into Chunks]
+
+E --> F[Generate Embeddings]
+
+F --> G[Store Embeddings in Pinecone]
+
+G --> H[Save Metadata in MongoDB]
+
+H --> I[Ready for AI Chat]
+```
+
+## 🤖 RAG Pipeline
+
+```mermaid
+flowchart TD
+
+A[User Question]
+
+A --> B[Generate Query Embedding]
+
+B --> C[Semantic Search]
+
+C --> D[Pinecone Vector Database]
+
+D --> E[Retrieve Similar Chunks]
+
+E --> F[Build Context]
+
+F --> G[Generate Prompt]
+
+G --> H[Mistral AI]
+
+H --> I[Generate Answer]
+
+I --> J[Return Response]
+```
+
+## 🌐 Internet Search Workflow
+
+```mermaid
+flowchart TD
+
+A[User Question]
+
+A --> B[Internet Search Enabled]
+
+B --> C[Tavily Search API]
+
+C --> D[Retrieve Web Results]
+
+D --> E[Build Prompt]
+
+E --> F[Mistral AI]
+
+F --> G[Generate AI Response]
+
+G --> H[Display Response]
+```
+
+## 💬 Chat Request Flow
+
+```mermaid
+sequenceDiagram
+
+participant User
+participant Frontend
+participant Backend
+participant Pinecone
+participant Mistral
+participant MongoDB
+
+User->>Frontend: Ask Question
+
+Frontend->>Backend: POST /api/chat/ask
+
+Backend->>Pinecone: Semantic Search
+
+Pinecone-->>Backend: Relevant Chunks
+
+Backend->>Mistral: Prompt + Context
+
+Mistral-->>Backend: AI Response
+
+Backend->>MongoDB: Save Chat
+
+MongoDB-->>Backend: Success
+
+Backend-->>Frontend: Response
+
+Frontend-->>User: Display Answer
+```
+
+## 🏛️ System Architecture
+
+```mermaid
+flowchart LR
+
+A[React Frontend]
+
+A --> B[Express Backend]
+
+B --> C[JWT Authentication]
+
+B --> D[MongoDB]
+
+B --> E[LangChain]
+
+E --> F[Mistral AI]
+
+E --> G[Pinecone]
+
+E --> H[Tavily Search]
+
+B --> I[PDF Parser]
+
+I --> E
+
+G --> E
+
+F --> B
+
+B --> A
+```
+
+## 🗂️ Document Upload Flow
+
+```mermaid
+flowchart TD
+
+A[Select PDF]
+
+A --> B[Validate Size & Type]
+
+B --> C[Upload to Server]
+
+C --> D[Save File]
+
+D --> E[Extract Text]
+
+E --> F[Split into Chunks]
+
+F --> G[Generate Embeddings]
+
+G --> H[Store in Pinecone]
+
+H --> I[Save Metadata]
+
+I --> J[Upload Complete]
+```
+
