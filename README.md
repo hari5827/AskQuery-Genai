@@ -16,23 +16,23 @@ AskQuery is a full-stack AI-powered document assistant that allows users to uplo
 </div>
 
 
- **Highlights**
+## ✨ Features
 
-• Secure JWT Authentication
-• Email Verification using Gmail OAuth
-• PDF Upload & Management
-• Retrieval-Augmented Generation (RAG)
-• Semantic Search with Pinecone
-• Mistral Embeddings
-• LangChain Pipeline
-• Internet Search (Tavily)
-• Persistent Chat History
-• Markdown + Code Rendering
-• Mathematical Formula Rendering (KaTeX)
-• Syntax Highlighting
-• Responsive UI
+- Secure JWT Authentication
+- Email Verification using Gmail OAuth2
+- PDF Upload & Management
+- Retrieval-Augmented Generation (RAG)
+- Semantic Search with Pinecone
+- Mistral Embeddings
+- LangChain Pipeline
+- Internet Search (Tavily)
+- Persistent Chat History
+- Markdown Rendering
+- Mathematical Formula Rendering (KaTeX)
+- Syntax Highlighting
+- Responsive UI
 
-###**Tech Stack**
+## 🛠️ Tech Stack
 
 ### **Frontend**
 
@@ -74,7 +74,7 @@ AskQuery is a full-stack AI-powered document assistant that allows users to uplo
 - **Package Manager:** npm
 - **API Testing:** Postman
 
-###**workflow diagram**
+## 🔄 Workflow Diagrams
 
 
 ## 🏗️ Application Workflow
@@ -300,3 +300,46 @@ H --> I[Save Metadata]
 I --> J[Upload Complete]
 ```
 
+## 📂 Project Structure
+
+```mermaid
+graph TD
+
+A[AskQuery]
+
+A --> B[Frontend]
+
+B --> B1[src]
+
+B1 --> B11[components]
+B1 --> B12[pages]
+B1 --> B13[layouts]
+B1 --> B14[features]
+B1 --> B15[hooks]
+B1 --> B16[services]
+B1 --> B17[utils]
+B1 --> B18[assets]
+
+B --> B2[public]
+
+B --> B3[vite.config.js]
+
+A --> C[Backend]
+
+C --> C1[src]
+
+C1 --> C11[controllers]
+C1 --> C12[routes]
+C1 --> C13[middleware]
+C1 --> C14[models]
+C1 --> C15[services]
+C1 --> C16[utils]
+C1 --> C17[config]
+C1 --> C18[uploads]
+
+C --> C2[server.js]
+
+C --> C3[package.json]
+
+A --> D[README.md]
+```
