@@ -343,3 +343,117 @@ C --> C3[package.json]
 
 A --> D[README.md]
 ```
+
+## 🚀 Installation
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/hari5827/AskQuery-Genai.git
+```
+
+### 2. Install Backend Dependencies
+
+```bash
+cd backend
+npm install
+```
+
+### 3. Install Frontend Dependencies
+
+```bash
+cd ../frontend
+npm install
+```
+
+### 4. Configure Environment Variables
+
+Create a `.env` file inside the backend directory.
+
+### 5. Start Backend
+
+```bash
+npm run dev
+```
+
+### 6. Start Frontend
+
+```bash
+npm run dev
+```
+
+## 🔑 Environment Variables
+
+Create a `.env` file inside the **backend** folder.
+
+```env
+PORT=
+
+MONGO_URI=
+
+JWT_SECRET=
+
+GOOGLE_CLIENT_ID=
+
+GOOGLE_CLIENT_SECRET=
+
+GOOGLE_REFRESH_TOKEN=
+
+GOOGLE_EMAIL=
+
+MISTRAL_API_KEY=
+
+PINECONE_API_KEY=
+
+TAVILY_API_KEY=
+```
+
+## 📡 API Endpoints
+
+### Authentication
+
+| Method | Endpoint |
+|--------|----------|
+| POST | `/api/auth/register` |
+| POST | `/api/auth/login` |
+| POST | `/api/auth/logout` |
+| GET | `/api/auth/me` |
+| POST | `/api/auth/verify-email` |
+
+### PDF
+
+| Method | Endpoint |
+|--------|----------|
+| POST | `/api/pdf/upload` |
+| GET | `/api/pdf` |
+| DELETE | `/api/pdf/:id` |
+
+### Chat
+
+| Method | Endpoint |
+|--------|----------|
+| POST | `/api/chat/ask` |
+| GET | `/api/chat/history` |
+| DELETE | `/api/chat/:id` |
+
+## 🚀 Upcoming Features
+
+- [ ] Streaming AI Responses
+- [ ] YouTube Video Q&A
+- [ ] Redis Caching
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 👨‍💻 Author
+
+**Hariom Mishra**
+
+- GitHub: https://github.com/hari5827
+- LinkedIn: https://www.linkedin.com/in/hariom-mishra-b0880b255/
+
+  ## ⭐ Support
+
+If you found this project helpful, consider giving it a ⭐ on GitHub.
+It helps others discover the project and supports future development.
