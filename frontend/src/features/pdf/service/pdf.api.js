@@ -7,12 +7,18 @@ const api = axios.create({
   withCredentials: true,
 })
 
-export const uploadDocument = async (file) => {
+export const uploadDocument = async (file, onProgress) => {
     const formData = new FormData()
     formData.append("document", file)
 
     const response = await api.post("/api/pdf/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+            if (onProgress && progressEvent.total) {
+                const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                onProgress(percent)
+            }
+        },
     })
     return response.data
 }
@@ -31,4 +37,3 @@ export const askDocument = async ({ question, documentId, chatId }) => {
     const response = await api.post("/api/pdf/ask", { question, documentId, chatId })
     return response.data
 }
-

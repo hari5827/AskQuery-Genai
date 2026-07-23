@@ -67,6 +67,25 @@
         color: #f87171;
       }
 
+      .loader-status {
+        position: relative;
+        margin-top: 10px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-size: 13px;
+        color: #71717a;
+        opacity: 0;
+        animation: loaderTextIn 0.4s ease-out 0.45s both;
+      }
+
+      .loader-status.is-switching {
+        animation: loaderStatusSwitch 0.25s ease-out both;
+      }
+
+      @keyframes loaderStatusSwitch {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
       @keyframes loaderLogoIn {
         from { opacity: 0; transform: scale(0.75); }
         to { opacity: 1; transform: scale(1); }
@@ -94,9 +113,9 @@
         <div class="loader-glow"></div>
         <img src="/askquery-logo.svg" alt="AskQuery" class="loader-logo" />
         <h1 class="loader-text">Ask<span>Query</span></h1>
+        <p class="loader-status" id="loader-status">Initializing AI...</p>
       </div>
     </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
-

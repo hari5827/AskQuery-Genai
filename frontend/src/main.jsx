@@ -18,17 +18,41 @@ function mountApp() {
 
 // The static loading screen in index.html paints instantly (before this
 // bundle even loads), but on a fast connection React can finish mounting
-// in well under a second — cutting its animation off mid-play. Hold it
-// for a minimum time, then fade it out, before swapping in the real app.
+// in well under a second — cutting its animation off mid-play. Cycle it
+// through a short branded status sequence, hold, fade, then mount.
 const loader = document.getElementById('initial-loader')
+const statusEl = document.getElementById('loader-status')
 
-if (loader) {
+const LOADER_STAGES = [
+  'Initializing AI...',
+  'Loading Models...',
+  'Connecting Vector Database...',
+  'Preparing Workspace...',
+]
+const STAGE_MS = 380
+
+if (loader && statusEl) {
+  let stageIndex = 0
+
+  const stageTimer = setInterval(() => {
+    stageIndex += 1
+    if (stageIndex >= LOADER_STAGES.length) {
+      clearInterval(stageTimer)
+      return
+    }
+    statusEl.textContent = LOADER_STAGES[stageIndex]
+    statusEl.classList.remove('is-switching')
+    // Force reflow so the switch-in animation replays on each change.
+    void statusEl.offsetWidth
+    statusEl.classList.add('is-switching')
+  }, STAGE_MS)
+
   setTimeout(() => {
+    clearInterval(stageTimer)
     loader.style.transition = 'opacity 300ms ease'
     loader.style.opacity = '0'
     setTimeout(mountApp, 300)
-  }, 900)
+  }, LOADER_STAGES.length * STAGE_MS + 200)
 } else {
   mountApp()
 }
-

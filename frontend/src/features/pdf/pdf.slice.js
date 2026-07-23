@@ -6,7 +6,9 @@ const pdfSlice = createSlice({
         documents: {},
         documentsLoading: false,
         selectedDocumentId: null,
-        uploadStatus: 'idle', // idle | uploading | success | error
+        uploadStatus: 'idle', // idle | uploading | processing | success | error
+        uploadProgress: 0,
+        uploadStageText: '',
         uploadError: null,
     },
     reducers: {
@@ -32,6 +34,12 @@ const pdfSlice = createSlice({
         setUploadStatus: (state, action) => {
             state.uploadStatus = action.payload
         },
+        setUploadProgress: (state, action) => {
+            state.uploadProgress = action.payload
+        },
+        setUploadStageText: (state, action) => {
+            state.uploadStageText = action.payload
+        },
         setUploadError: (state, action) => {
             state.uploadError = action.payload
         },
@@ -45,6 +53,8 @@ export const {
     setSelectedDocument,
     clearSelectedDocument,
     setUploadStatus,
+    setUploadProgress,
+    setUploadStageText,
     setUploadError,
 } = pdfSlice.actions
 export default pdfSlice.reducer

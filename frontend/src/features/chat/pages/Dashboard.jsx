@@ -33,6 +33,8 @@ const Dashboard = () => {
   const documents = useSelector((state) => state.pdf.documents);
   const selectedDocumentId = useSelector((state) => state.pdf.selectedDocumentId);
   const uploadStatus = useSelector((state) => state.pdf.uploadStatus);
+  const uploadProgress = useSelector((state) => state.pdf.uploadProgress);
+  const uploadStageText = useSelector((state) => state.pdf.uploadStageText);
   const uploadError = useSelector((state) => state.pdf.uploadError);
   const selectedDocument = selectedDocumentId ? documents[selectedDocumentId] : null;
 
@@ -177,6 +179,8 @@ const Dashboard = () => {
             selectedDocument={selectedDocument}
             onDeselectDocument={pdf.handleDeselectDocument}
             uploadStatus={uploadStatus}
+            uploadProgress={uploadProgress}
+            uploadStageText={uploadStageText}
             uploadError={uploadError}
             onFileSelected={pdf.handleUploadDocument}
             onInvalidFile={pdf.handleInvalidFile}
@@ -229,3 +233,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+

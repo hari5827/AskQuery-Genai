@@ -13,6 +13,8 @@ export function ChatInput({
   selectedDocument,
   onDeselectDocument,
   uploadStatus,
+  uploadProgress,
+  uploadStageText,
   uploadError,
   onFileSelected,
   onInvalidFile,
@@ -47,6 +49,8 @@ export function ChatInput({
           onFileSelected={onFileSelected}
           onInvalidFile={onInvalidFile}
           uploadStatus={uploadStatus}
+          uploadProgress={uploadProgress}
+          uploadStageText={uploadStageText}
           uploadError={uploadError}
           onResetStatus={onResetUploadStatus}
         />
@@ -80,4 +84,5 @@ export function ChatInput({
 }
 
 export default ChatInput;
+
 

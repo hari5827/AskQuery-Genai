@@ -7,6 +7,8 @@ export function UploadDocumentButton({
   onFileSelected,
   onInvalidFile,
   uploadStatus,
+  uploadProgress,
+  uploadStageText,
   uploadError,
   onResetStatus,
 }) {
@@ -33,7 +35,7 @@ export function UploadDocumentButton({
     }
   }, [uploadStatus, onResetStatus]);
 
-  const isUploading = uploadStatus === "uploading";
+  const isBusy = uploadStatus === "uploading" || uploadStatus === "processing";
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -59,14 +61,14 @@ export function UploadDocumentButton({
         type="button"
         onClick={() => setMenuOpen((prev) => !prev)}
         title="Add"
-        disabled={isUploading}
+        disabled={isBusy}
         className={`flex shrink-0 items-center justify-center rounded-full p-2 transition sm:p-2.5 ${
           menuOpen
             ? "bg-red-500/15 text-red-400"
             : "text-zinc-400 hover:bg-white/5 hover:text-white"
         } disabled:cursor-not-allowed disabled:opacity-50`}
       >
-        {isUploading ? (
+        {isBusy ? (
           <>
             <Loader2 size={18} className="animate-spin sm:hidden" />
             <Loader2 size={20} className="hidden animate-spin sm:block" />
@@ -103,10 +105,32 @@ export function UploadDocumentButton({
         className="hidden"
       />
 
+      {!menuOpen && uploadStatus === "uploading" && (
+        <div className="absolute bottom-full left-0 mb-2 w-56 rounded-2xl border border-white/10 bg-[#111111] px-3.5 py-3 shadow-xl">
+          <p className="mb-2 text-xs text-zinc-300">{uploadStageText || "Uploading PDF..."}</p>
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-red-700 to-red-500 transition-all duration-200"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+            <span className="text-[11px] tabular-nums text-zinc-500">{uploadProgress}%</span>
+          </div>
+        </div>
+      )}
+
+      {!menuOpen && uploadStatus === "processing" && (
+        <div className="absolute bottom-full left-0 mb-2 flex w-56 items-center gap-2 whitespace-nowrap rounded-2xl border border-white/10 bg-[#111111] px-3.5 py-3 text-xs text-zinc-300 shadow-xl">
+          <Loader2 size={13} className="shrink-0 animate-spin text-red-400" />
+          {uploadStageText}
+        </div>
+      )}
+
       {!menuOpen && uploadStatus === "success" && (
         <div className="absolute bottom-full left-0 mb-2 flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-400">
           <CheckCircle2 size={13} />
-          Uploaded successfully
+          {uploadStageText || "Ready!"}
         </div>
       )}
 
