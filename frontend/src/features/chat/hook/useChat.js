@@ -1,7 +1,7 @@
 import { initializeSocketConnection } from "../service/chat.socket";
-import { sendMessage, getChats, getMessages, deleteChat } from "../service/chat.api";
+import { sendMessage, streamMessage, getChats, getMessages, deleteChat } from "../service/chat.api";
 import { askDocument } from "../../pdf/service/pdf.api";
-import { setChats, setCurrentChatId, setError, setLoading, createNewChat, addNewMessage, addMessages, clearCurrentChat,removeChat } from "../chat.slice";
+import { setChats, setCurrentChatId, setError, setLoading, createNewChat, addNewMessage, addMessages, clearCurrentChat,removeChat, appendStreamChunk, completeStreamingMessage } from "../chat.slice";
 import { useDispatch } from "react-redux";
 
 export const useChat = () => {
@@ -50,6 +50,100 @@ export const useChat = () => {
         dispatch(setLoading(false))
     }
 }
+
+    // Streaming counterpart to handleSendMessage. Reads the SSE response
+    // body as it arrives instead of waiting for the full JSON reply, so
+    // the AI bubble fills in progressively.
+    async function handleSendMessageStream({ message, chatId, webSearch }) {
+        dispatch(setLoading(true))
+
+        if (chatId) {
+            dispatch(addNewMessage({
+                chatId,
+                content: message,
+                role: "user",
+            }))
+        }
+
+        let activeChatId = chatId
+        let aiMessageStarted = false
+
+        try {
+            const response = await streamMessage({ message, chatId, webSearch })
+            const reader = response.body.getReader()
+            const decoder = new TextDecoder()
+
+            let buffer = ""
+
+            while (true) {
+                const { value, done } = await reader.read()
+                if (done) break
+
+                buffer += decoder.decode(value, { stream: true })
+
+                // SSE events are separated by a blank line; keep any
+                // trailing partial event in the buffer for the next chunk.
+                const events = buffer.split("\n\n")
+                buffer = events.pop()
+
+                for (const rawEvent of events) {
+                    const line = rawEvent.trim()
+                    if (!line.startsWith("data:")) continue
+
+                    const event = JSON.parse(line.slice(5).trim())
+
+                    if (event.type === "start" && !chatId) {
+                        activeChatId = event.chat._id
+                        dispatch(createNewChat({
+                            chatId: activeChatId,
+                            title: event.title,
+                        }))
+                        dispatch(addNewMessage({
+                            chatId: activeChatId,
+                            content: message,
+                            role: "user",
+                        }))
+                        dispatch(setCurrentChatId(activeChatId))
+                    }
+
+                    if (event.type === "chunk") {
+                        if (!aiMessageStarted) {
+                            // First token arrived — swap the "thinking"
+                            // indicator for the real (empty-but-growing) bubble.
+                            dispatch(setLoading(false))
+                            dispatch(addNewMessage({
+                                chatId: activeChatId,
+                                content: "",
+                                role: "ai",
+                                streaming: true,
+                            }))
+                            aiMessageStarted = true
+                        }
+                        dispatch(appendStreamChunk({
+                            chatId: activeChatId,
+                            chunk: event.content,
+                        }))
+                    }
+
+                    if (event.type === "done") {
+                        dispatch(completeStreamingMessage({
+                            chatId: activeChatId,
+                            sources: event.aiMessage?.sources,
+                        }))
+                    }
+
+                    if (event.type === "error") {
+                        dispatch(setError(event.message))
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Failed to stream message:", error)
+            dispatch(setError(error?.message || "Something went wrong"))
+        } finally {
+            dispatch(setLoading(false))
+        }
+    }
 
     async function handleGetChats() {
         dispatch(setLoading(true))
@@ -145,6 +239,7 @@ export const useChat = () => {
     return {
         initializeSocketConnection,
         handleSendMessage,
+        handleSendMessageStream,
         handleGetChats,
         handleOpenChat,
         handleClearCurrentChat,

@@ -1,4 +1,4 @@
-import { generateResponse ,generateChatTitle } from "../services/ai.service.js";
+import { generateResponse, generateChatTitle, streamResponse } from "../services/ai.service.js";
 import chatModel from "../models/chat.model.js";
 import messageModel from "../models/message.model.js";
 
@@ -42,6 +42,69 @@ export async function sendMessage(req, res) {
 
     }
 
+
+// Server-Sent Events version of sendMessage. Persists exactly the same
+// records (chat/title if new, user message, final AI message) but pushes
+// the AI's answer to the client token-by-token instead of all at once.
+export async function sendMessageStream(req, res) {
+  const { message, chat: chatId, webSearch } = req.body;
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders?.();
+
+  const sendEvent = (data) => {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  try {
+    let title = null, chat = null;
+
+    if (!chatId) {
+      title = await generateChatTitle(message);
+      chat = await chatModel.create({
+        user: req.user.id,
+        title,
+      });
+    }
+
+    const resolvedChatId = chatId || chat._id;
+
+    await messageModel.create({
+      chat: resolvedChatId,
+      content: message,
+      role: "user",
+    });
+
+    // Sent immediately so the client can create the sidebar entry /
+    // set the active chat before any AI tokens arrive.
+    sendEvent({ type: "start", chat, title });
+
+    const messages = await messageModel.find({ chat: resolvedChatId });
+
+    const { text, sources } = await streamResponse(
+      messages,
+      webSearch,
+      req.user.id,
+      (token) => sendEvent({ type: "chunk", content: token })
+    );
+
+    const aiMessage = await messageModel.create({
+      chat: resolvedChatId,
+      content: text,
+      role: "ai",
+      sources,
+    });
+
+    sendEvent({ type: "done", aiMessage });
+    res.end();
+  } catch (error) {
+    console.error("Streaming error:", error);
+    sendEvent({ type: "error", message: "Something went wrong while generating the response." });
+    res.end();
+  }
+}
 
 export async function getChats(req, res) {
      const user = req.user

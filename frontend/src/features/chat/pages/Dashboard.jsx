@@ -110,7 +110,7 @@ const Dashboard = () => {
       setPendingFirstMessage(trimmedMessage);
     }
 
-    await chat.handleSendMessage({
+    await chat.handleSendMessageStream({
       message: trimmedMessage,
       chatId: currentChatId,
       webSearch: webSearchOn,
@@ -233,4 +233,5 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
 

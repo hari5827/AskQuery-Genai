@@ -64,9 +64,10 @@ function extractSources(agentMessages) {
   return sources;
 }
 
-export async function generateResponse(messages, webSearchEnabled = false, userId = null) {
-  console.log(messages);
-
+// Builds the tool list + LangChain message array shared by both the
+// blocking (generateResponse) and streaming (streamResponse) paths, so
+// the two stay in sync instead of drifting apart over time.
+function buildToolsAndMessages(messages, webSearchEnabled, userId) {
   const tools = [];
 
   if (webSearchEnabled) {
@@ -125,6 +126,14 @@ export async function generateResponse(messages, webSearchEnabled = false, userI
     }),
   ];
 
+  return { tools, baseMessages };
+}
+
+export async function generateResponse(messages, webSearchEnabled = false, userId = null) {
+  console.log(messages);
+
+  const { tools, baseMessages } = buildToolsAndMessages(messages, webSearchEnabled, userId);
+
   if (tools.length === 0) {
     const response = await mistralmodel.invoke(baseMessages);
     return { text: response.text, sources: [] };
@@ -140,6 +149,59 @@ export async function generateResponse(messages, webSearchEnabled = false, userI
   const sources = extractSources(response.messages);
 
   return { text, sources };
+}
+
+// Same logic as generateResponse, but calls onToken(chunk) as text arrives
+// instead of waiting for the whole answer. Used by the SSE endpoint so the
+// UI can render the reply progressively instead of one big blob at the end.
+export async function streamResponse(messages, webSearchEnabled = false, userId = null, onToken = () => {}) {
+  const { tools, baseMessages } = buildToolsAndMessages(messages, webSearchEnabled, userId);
+
+  let fullText = "";
+
+  // No tools needed: stream tokens straight from the chat model.
+  if (tools.length === 0) {
+    const stream = await mistralmodel.stream(baseMessages);
+    for await (const chunk of stream) {
+      const token = chunk?.content;
+      if (typeof token === "string" && token.length > 0) {
+        fullText += token;
+        onToken(token);
+      }
+    }
+    return { text: fullText, sources: [] };
+  }
+
+  // Tools may run first (web search / chat history lookup); once the
+  // agent moves on to producing the final answer, those chunks stream
+  // out as they're generated. streamMode "messages" yields [chunk, metadata]
+  // pairs for every step in the underlying graph, so we grab completed
+  // ToolMessage chunks for source extraction and stream everything else
+  // that carries text content.
+  const agent = createAgent({ model: mistralmodel, tools });
+
+  const stream = await agent.stream(
+    { messages: baseMessages },
+    { streamMode: "messages" }
+  );
+
+  const toolMessages = [];
+
+  for await (const [chunk] of stream) {
+    if (typeof chunk?._getType === "function" && chunk._getType() === "tool") {
+      toolMessages.push(chunk);
+      continue;
+    }
+
+    const token = chunk?.content;
+    if (typeof token === "string" && token.length > 0) {
+      fullText += token;
+      onToken(token);
+    }
+  }
+
+  const sources = extractSources(toolMessages);
+  return { text: fullText, sources };
 }
 
 export async function generateChatTitle(message) {

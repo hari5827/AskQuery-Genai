@@ -108,8 +108,11 @@ export function MessageBubble({ message, isNewest }) {
             >
               {message.content}
             </ReactMarkdown>
+            {message.streaming && (
+              <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-red-400/70 align-middle" />
+            )}
             <SourcesList sources={message.sources} />
-            <CopyMessageButton content={message.content} />
+            {!message.streaming && <CopyMessageButton content={message.content} />}
           </>
         )}
       </div>
@@ -118,3 +121,4 @@ export function MessageBubble({ message, isNewest }) {
 }
 
 export default MessageBubble;
+

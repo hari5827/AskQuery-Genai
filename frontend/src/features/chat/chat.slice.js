@@ -28,8 +28,22 @@ const chatSlice = createSlice({
             }
         },
         addNewMessage: (state, action) => {
-            const { chatId, content, role, sources } = action.payload
-            state.chats[ chatId ].messages.push({ content, role, sources: sources || [] })
+            const { chatId, content, role, sources, streaming } = action.payload
+            state.chats[ chatId ].messages.push({ content, role, sources: sources || [], streaming: !!streaming })
+        },
+        appendStreamChunk: (state, action) => {
+            const { chatId, chunk } = action.payload
+            const messages = state.chats[ chatId ]?.messages
+            if (!messages || messages.length === 0) return
+            messages[ messages.length - 1 ].content += chunk
+        },
+        completeStreamingMessage: (state, action) => {
+            const { chatId, sources } = action.payload
+            const messages = state.chats[ chatId ]?.messages
+            if (!messages || messages.length === 0) return
+            const lastMessage = messages[ messages.length - 1 ]
+            lastMessage.streaming = false
+            lastMessage.sources = sources || []
         },
         addMessages: (state, action) => {
             const { chatId, messages } = action.payload
@@ -53,5 +67,5 @@ const chatSlice = createSlice({
     }
 })
 
-export const { setChats, setCurrentChatId, setLoading, setError, createNewChat, addNewMessage, addMessages, clearCurrentChat ,removeChat} = chatSlice.actions
+export const { setChats, setCurrentChatId, setLoading, setError, createNewChat, addNewMessage, addMessages, clearCurrentChat ,removeChat, appendStreamChunk, completeStreamingMessage} = chatSlice.actions
 export default chatSlice.reducer
