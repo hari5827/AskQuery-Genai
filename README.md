@@ -438,7 +438,7 @@ TAVILY_API_KEY=
 
 ## 🚀 Upcoming Features
 
-- [ ] Streaming AI Responses
+- [x] Streaming AI Responses
 - [ ] YouTube Video Q&A
 - [ ] Redis Caching
 
