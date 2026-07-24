@@ -440,7 +440,7 @@ TAVILY_API_KEY=
 
 - [x] Streaming AI Responses
 - [ ] YouTube Video Q&A
-- [ ] Redis Caching
+- [x] Redis Caching
 
 ## 📄 License
 
