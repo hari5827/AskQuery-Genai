@@ -1,6 +1,6 @@
 import { initializeSocketConnection } from "../service/chat.socket";
 import { sendMessage, streamMessage, getChats, getMessages, deleteChat } from "../service/chat.api";
-import { askDocument } from "../../pdf/service/pdf.api";
+import { askDocument, streamAskDocument } from "../../pdf/service/pdf.api";
 import { setChats, setCurrentChatId, setError, setLoading, createNewChat, addNewMessage, addMessages, clearCurrentChat,removeChat, appendStreamChunk, completeStreamingMessage } from "../chat.slice";
 import { useDispatch } from "react-redux";
 
@@ -213,6 +213,96 @@ export const useChat = () => {
         }
     }
 
+    // Streaming counterpart to handleAskDocument - same SSE-parsing
+    // approach as handleSendMessageStream, pointed at /api/pdf/ask/stream.
+    async function handleAskDocumentStream({ question, chatId, documentId }) {
+        dispatch(setLoading(true))
+
+        if (chatId) {
+            dispatch(addNewMessage({
+                chatId,
+                content: question,
+                role: "user",
+            }))
+        }
+
+        let activeChatId = chatId
+        let aiMessageStarted = false
+
+        try {
+            const response = await streamAskDocument({ question, documentId, chatId })
+            const reader = response.body.getReader()
+            const decoder = new TextDecoder()
+
+            let buffer = ""
+
+            while (true) {
+                const { value, done } = await reader.read()
+                if (done) break
+
+                buffer += decoder.decode(value, { stream: true })
+
+                const events = buffer.split("\n\n")
+                buffer = events.pop()
+
+                for (const rawEvent of events) {
+                    const line = rawEvent.trim()
+                    if (!line.startsWith("data:")) continue
+
+                    const event = JSON.parse(line.slice(5).trim())
+
+                    if (event.type === "start" && !chatId) {
+                        activeChatId = event.chat._id
+                        dispatch(createNewChat({
+                            chatId: activeChatId,
+                            title: event.chat.title,
+                            documentId,
+                        }))
+                        dispatch(addNewMessage({
+                            chatId: activeChatId,
+                            content: question,
+                            role: "user",
+                        }))
+                        dispatch(setCurrentChatId(activeChatId))
+                    }
+
+                    if (event.type === "chunk") {
+                        if (!aiMessageStarted) {
+                            dispatch(setLoading(false))
+                            dispatch(addNewMessage({
+                                chatId: activeChatId,
+                                content: "",
+                                role: "ai",
+                                streaming: true,
+                            }))
+                            aiMessageStarted = true
+                        }
+                        dispatch(appendStreamChunk({
+                            chatId: activeChatId,
+                            chunk: event.content,
+                        }))
+                    }
+
+                    if (event.type === "done") {
+                        dispatch(completeStreamingMessage({
+                            chatId: activeChatId,
+                            sources: event.aiMessage?.sources,
+                        }))
+                    }
+
+                    if (event.type === "error") {
+                        dispatch(setError(event.message))
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Failed to stream document answer:", error)
+            dispatch(setError(error?.message || "Something went wrong"))
+        } finally {
+            dispatch(setLoading(false))
+        }
+    }
+
     async function handleOpenChat(chatId, chats) {
         if (chats[chatId]?.messages.length === 0) {
             const data = await getMessages(chatId)
@@ -245,5 +335,6 @@ export const useChat = () => {
         handleClearCurrentChat,
         handleDeleteChat,
         handleAskDocument,
+        handleAskDocumentStream,
     }
 }

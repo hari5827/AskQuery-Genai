@@ -1,9 +1,11 @@
 import axios from "axios";
 
-const api = axios.create({
-  baseURL: window.location.hostname === "localhost"
+const BASE_URL = window.location.hostname === "localhost"
     ? "http://localhost:3000"
-    : "http://192.168.29.238:3000/",  // apna actual laptop IP daal
+    : "http://192.168.29.238:3000"
+
+const api = axios.create({
+  baseURL: BASE_URL,
   withCredentials: true,
 })
 
@@ -36,4 +38,19 @@ export const deleteDocument = async (documentId) => {
 export const askDocument = async ({ question, documentId, chatId }) => {
     const response = await api.post("/api/pdf/ask", { question, documentId, chatId })
     return response.data
+}
+
+export const streamAskDocument = async ({ question, documentId, chatId }) => {
+    const response = await fetch(`${BASE_URL}/api/pdf/ask/stream`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ question, documentId, chatId }),
+    })
+
+    if (!response.ok || !response.body) {
+        throw new Error("Failed to start streaming response")
+    }
+
+    return response
 }

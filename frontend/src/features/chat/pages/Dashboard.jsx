@@ -96,7 +96,7 @@ const Dashboard = () => {
         setPendingFirstMessage(trimmedMessage);
       }
 
-      await chat.handleAskDocument({
+      await chat.handleAskDocumentStream({
         question: trimmedMessage,
         chatId: isExistingDocChat ? currentChatId : null,
         documentId: selectedDocumentId,

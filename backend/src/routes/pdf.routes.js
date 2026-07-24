@@ -1,6 +1,6 @@
 import express from "express";
 import { upload } from "../middleware/upload.middleware.js";
-import { askQuestion, getDocuments, deleteDocument,uploadDocument } from "../controllers/pdf.controller.js";
+import { askQuestion, askQuestionStream, getDocuments, deleteDocument,uploadDocument } from "../controllers/pdf.controller.js";
 import { authUser } from "../middleware/auth.middleware.js";
 import { askLimiter ,uploadLimiter } from "../middleware/rateLimit.middleware.js";
 const router = express.Router();
@@ -26,6 +26,7 @@ router.post("/upload", authUser,  uploadLimiter,(req, res, next) => {
     });
 }, uploadDocument);
 router.post("/ask", authUser, askLimiter,askQuestion);
+router.post("/ask/stream", authUser, askLimiter, askQuestionStream);
 
 router.get("/documents", authUser, getDocuments);
 
