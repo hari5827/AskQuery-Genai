@@ -439,7 +439,7 @@ TAVILY_API_KEY=
 ## 🚀 Upcoming Features
 
 - [x] Streaming AI Responses
-- [ ] YouTube Video Q&A
+- [x] YouTube Video Q&A
 - [x] Redis Caching
 
 ## 📄 License
