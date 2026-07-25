@@ -21,6 +21,12 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE"],
 }))
 
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "AskQuery Backend is running 🚀",
+  });
+});
 app.use("/api/auth",authRouter)
 app.use("/api/chats", chatRouter);
 app.use("/api/pdf", pdfRoutes);    
