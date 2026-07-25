@@ -31,7 +31,7 @@ export async function register(req,res){
                 <p>Hi ${username},</p>
                 <p>Thank you for registering at <strong>AskQuery</strong>.</p>
                 <p>Please verify your email address by clicking the link below:</p>
-                <a href="http://localhost:3000/api/auth/verify-email?token=${emailVerificationToken}">Verify Email</a>
+                <a href="${process.env.BACKEND_URL || "http://localhost:3000"}/api/auth/verify-email?token=${emailVerificationToken}">Verify Email</a>
                 <p>If you did not create an account, please ignore this email.</p>
                 <p>Best regards,<br>Wizardx</p>
         `
@@ -76,7 +76,7 @@ export async function verifyEmail(req, res) {
        const html = `
         <h1>Email Already Verified ✅</h1>
         <p>Your email is already verified.</p>
-        <a href="http://localhost:3000/login">Go to Login</a>
+       <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/login">Go to Login</a>
     `;
 
     return res.send(html);
@@ -104,65 +104,9 @@ export async function verifyEmail(req, res) {
 }
 
 
-export async function resendVerificationEmail(req, res) {
-    const { email } = req.body;
 
-    try {
 
-        const user = await userModel.findOne({ email });
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found"
-            });
-        }
-
-        if (user.verified) {
-            return res.status(400).json({
-                success: false,
-                message: "Email already verified"
-            });
-        }
-
-        const token = jwt.sign(
-            { email: user.email },
-            process.env.JWT_SECRET,
-            { expiresIn: "15m" }
-        );
-
-        const verifyLink =
-            `http://localhost:3000/api/auth/verify-email?token=${token}`;
-
-        await sendEmail({
-            to: email,
-            subject: "Verify your email",
-            html: `
-                <h2>Email Verification</h2>
-
-                <p>Click below to verify your email.</p>
-
-                <a href="${verifyLink}">
-                    Verify Email
-                </a>
-            `
-        });
-
-        return res.status(200).json({
-            success: true,
-            message: "Verification email sent."
-        });
-
-    } catch (err) {
-
-        return res.status(500).json({
-            success: false,
-            message: err.message
-        });
-
-    }
-}
-
+      
 
 
 export async function login(req, res) {
