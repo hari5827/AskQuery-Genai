@@ -16,7 +16,7 @@
 ![Pinecone](https://img.shields.io/badge/Pinecone-000000?style=for-the-badge)
 ![Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)
 ![Mistral](https://img.shields.io/badge/Mistral_AI-EA5A0C?style=for-the-badge)
-
+![Brevo](https://img.shields.io/badge/Brevo-Email%20API-0B996E?style=for-the-badge&logo=brevo&logoColor=white)
 </div>
 
 ---
@@ -37,7 +37,7 @@ Under the hood, the app chunks and embeds source content, stores the vectors in 
 ## ✨ Features
 
 - 🔐 **Secure authentication** — JWT stored in HTTP-only cookies, with rate-limited login/register endpoints
-- 📧 **Email verification** — Gmail OAuth2 via Nodemailer, with a resend-verification flow
+- 📧 **Email verification** — Gmail OAuth2 via Nodemailer, with a resend-verification flow [ now using Brevo email api]
 - 📄 **PDF upload & RAG chat** — parse, chunk, embed, and semantically search PDF content
 - ▶️ **YouTube Q&A** — drop in a video URL and chat with its transcript, using the same RAG pipeline
 - 🌐 **Live internet search mode** — a LangChain agent calls a Tavily search tool for up-to-date, non-document questions
@@ -73,7 +73,7 @@ Under the hood, the app chunks and embeds source content, stores the vectors in 
 | Database | MongoDB + Mongoose |
 | Cache | Redis (ioredis) |
 | Auth | JWT, HTTP-only cookies, custom auth middleware |
-| Email | Nodemailer with Gmail OAuth2 |
+| Email | Brevo email api |
 | File upload | Multer |
 | Validation | validator |
 | Security | CORS, cookie-parser, express-rate-limit |
@@ -346,6 +346,10 @@ This project is licensed under the MIT License.
 **Hariom Mishra**
 - GitHub: [@hari5827](https://github.com/hari5827)
 - LinkedIn: [hariom-mishra](https://www.linkedin.com/in/hariom-mishra-b0880b255/)
+- AskQuery : [Live Website](https://ask-query-genai.vercel.app/login)
+
+> **Note:** Using Brevo email api instead oauth2 due to render restriction.
+
 
 ## ⭐ Support
 
