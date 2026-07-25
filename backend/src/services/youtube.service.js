@@ -1,4 +1,4 @@
-import { YoutubeTranscript } from "youtube-transcript";
+import { Innertube } from "youtubei.js";
 import { Document } from "@langchain/core/documents";
 
 // Covers watch?v=, youtu.be/, /shorts/, and /embed/ URL formats.
@@ -25,29 +25,49 @@ export async function getVideoTitle(videoId) {
   }
 }
 
+// Innertube client setup is somewhat expensive (fetches player config etc.)
+// so we create it once and reuse it across requests instead of per-call.
+let innertubeClientPromise = null;
+function getInnertubeClient() {
+  if (!innertubeClientPromise) {
+    innertubeClientPromise = Innertube.create({
+      lang: "en",
+      location: "US",
+      retrieve_player: false,
+    });
+  }
+  return innertubeClientPromise;
+}
+
 // Fetches the video's transcript and returns it as a single LangChain
 // Document, ready to be handed to the existing splitDocument() the same
-// way a PDF's pages are. Note: the underlying transcript library returns
-// timestamp offsets in inconsistent units depending on which caption
-// format YouTube happens to serve for a given video, so we deliberately
-// don't try to expose per-chunk timestamps here - just the plain text,
-// which is what actually matters for answering questions.
+// way a PDF's pages are.
 export async function loadYoutubeTranscript(videoId) {
-  let entries;
+  let segments;
+
   try {
-    entries = await YoutubeTranscript.fetchTranscript(videoId);
+    const yt = await getInnertubeClient();
+    const info = await yt.getInfo(videoId);
+    const transcriptData = await info.getTranscript();
+
+    const initialSegments =
+      transcriptData?.transcript?.content?.body?.initial_segments || [];
+
+    segments = initialSegments
+      .filter((seg) => seg?.snippet?.text)
+      .map((seg) => seg.snippet.text);
   } catch (err) {
-    console.error("YoutubeTranscript.fetchTranscript failed:", err.message);
+    console.error("youtubei.js transcript fetch failed:", err.message);
     throw new Error(
       "Could not fetch a transcript for this video. It may not have captions available."
     );
   }
 
-  if (!entries || entries.length === 0) {
+  if (!segments || segments.length === 0) {
     throw new Error("This video doesn't have any captions/transcript available.");
   }
 
-  const fullText = entries.map((e) => e.text).join(" ");
+  const fullText = segments.join(" ");
 
   return [
     new Document({
