@@ -37,7 +37,7 @@ Under the hood, the app chunks and embeds source content, stores the vectors in 
 ## ✨ Features
 
 - 🔐 **Secure authentication** — JWT stored in HTTP-only cookies, with rate-limited login/register endpoints
-- 📧 **Email verification** — Gmail OAuth2 via Nodemailer, with a resend-verification flow
+- 📧 **Email verification** — Gmail OAuth2 via Nodemailer, with a resend-verification flow [ now using Brevo email api]
 - 📄 **PDF upload & RAG chat** — parse, chunk, embed, and semantically search PDF content
 - ▶️ **YouTube Q&A** — drop in a video URL and chat with its transcript, using the same RAG pipeline
 - 🌐 **Live internet search mode** — a LangChain agent calls a Tavily search tool for up-to-date, non-document questions
@@ -73,7 +73,7 @@ Under the hood, the app chunks and embeds source content, stores the vectors in 
 | Database | MongoDB + Mongoose |
 | Cache | Redis (ioredis) |
 | Auth | JWT, HTTP-only cookies, custom auth middleware |
-| Email | Nodemailer with Gmail OAuth2 |
+| Email | Brevo email api |
 | File upload | Multer |
 | Validation | validator |
 | Security | CORS, cookie-parser, express-rate-limit |
