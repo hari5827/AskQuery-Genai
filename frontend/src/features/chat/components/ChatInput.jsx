@@ -25,6 +25,8 @@ export function ChatInput({
   addingYoutube,
   youtubeError,
   onResetYoutubeStatus,
+  pendingManualTranscriptUrl,
+  onCancelManualTranscript,
 }) {
   return (
     <footer className="border-t border-white/5 bg-[#090909] p-4 sm:p-6">
@@ -48,10 +50,25 @@ export function ChatInput({
         </div>
       )}
 
+      {pendingManualTranscriptUrl && (
+        <div className="mx-auto mb-3 flex w-fit max-w-4xl items-center gap-2 rounded-full border border-red-700/30 bg-red-700/10 px-3 py-1.5 text-xs text-red-300 sm:text-sm">
+          <SquarePlay size={14} className="shrink-0" />
+          <span>Couldn't fetch that video's transcript automatically — paste it below</span>
+          <button
+            type="button"
+            onClick={onCancelManualTranscript}
+            title="Cancel"
+            className="rounded-full p-0.5 text-red-400 transition hover:bg-red-500/20 hover:text-red-200"
+          >
+            <X size={13} />
+          </button>
+        </div>
+      )}
+
       <form
         onSubmit={onSubmit}
         className={`mx-auto flex max-w-4xl items-center gap-2 rounded-full border bg-[#111111] pl-2 transition sm:gap-3 sm:pl-2.5 ${
-          youtubeMode
+          youtubeMode || pendingManualTranscriptUrl
             ? "border-red-600/60 focus-within:border-red-500"
             : "border-white/10 focus-within:border-red-600"
         }`}
@@ -60,7 +77,7 @@ export function ChatInput({
           type="button"
           onClick={() => setWebSearchOn((prev) => !prev)}
           title={webSearchOn ? "Web search on" : "Turn on web search"}
-          disabled={youtubeMode}
+          disabled={youtubeMode || pendingManualTranscriptUrl}
           className={`flex shrink-0 items-center justify-center rounded-full p-2 transition sm:p-2.5 ${
             webSearchOn
               ? "bg-red-500/15 text-red-400"
@@ -92,6 +109,8 @@ export function ChatInput({
           placeholder={
             youtubeMode
               ? "Paste a YouTube video link..."
+              : pendingManualTranscriptUrl
+              ? "Paste the video transcript here..."
               : selectedDocument
               ? "Ask about this document..."
               : webSearchOn
@@ -107,7 +126,7 @@ export function ChatInput({
           disabled={!chatInput.trim() || isLoading}
           className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-red-600 to-red-500 px-4 py-2.5 font-semibold text-white transition hover:from-red-500 hover:to-red-400 disabled:cursor-not-allowed disabled:from-red-950 disabled:to-red-950 disabled:text-red-300/50 sm:px-6 sm:py-3"
         >
-          {youtubeMode ? (
+          {youtubeMode || pendingManualTranscriptUrl ? (
             <>
               <SquarePlay size={18} className="sm:hidden" />
               <span className="hidden sm:inline">Add</span>

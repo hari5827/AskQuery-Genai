@@ -39,6 +39,7 @@ const Dashboard = () => {
   const uploadError = useSelector((state) => state.pdf.uploadError);
   const addingYoutube = useSelector((state) => state.pdf.addingYoutube);
   const youtubeError = useSelector((state) => state.pdf.youtubeError);
+  const pendingManualTranscriptUrl = useSelector((state) => state.pdf.pendingManualTranscriptUrl);
   const selectedDocument = selectedDocumentId ? documents[selectedDocumentId] : null;
 
   const [chatToDelete, setChatToDelete] = useState(null);
@@ -50,18 +51,13 @@ const Dashboard = () => {
     handleDeleteChat,
   } = useChat();
 
-  // Sidebar collapse/expand — open by default on desktop, closed on mobile
   const [sidebarOpen, setSidebarOpen] = useState(
     () => typeof window !== "undefined" && window.innerWidth >= 768
   );
 
-  // Account modals
-  const [modalType, setModalType] = useState(null); // 'logout' | 'delete' | null
+  const [modalType, setModalType] = useState(null);
   const [showLogoutToast, setShowLogoutToast] = useState(false);
 
-  // Tracks how many messages existed last render, per chat,
-  // so we only animate the newest bubble instead of replaying
-  // the animation on every message whenever the list re-renders.
   const prevCountRef = useRef({});
   const currentMessages = chats[currentChatId]?.messages;
   const currentCount = currentMessages?.length || 0;
@@ -88,15 +84,18 @@ const Dashboard = () => {
 
     setChatInput("");
 
+    if (pendingManualTranscriptUrl) {
+      const urlAwaitingTranscript = pendingManualTranscriptUrl;
+      await pdf.handleAddYoutubeVideo(urlAwaitingTranscript, trimmedMessage);
+      return;
+    }
+
     if (youtubeMode) {
       setYoutubeMode(false);
       await pdf.handleAddYoutubeVideo(trimmedMessage);
       return;
     }
 
-    // When a document is selected, questions go through the PDF
-    // Q&A flow instead of the normal chats API. Continue the same
-    // chat thread only if we're already viewing that document's chat.
     if (selectedDocumentId) {
       const isExistingDocChat =
         currentChatId && chats[currentChatId]?.documentId === selectedDocumentId;
@@ -134,7 +133,6 @@ const Dashboard = () => {
 
   return (
     <main className="h-dvh overflow-hidden bg-[#050505] text-white">
-      {/* Background */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute -top-40 left-0 h-96 w-96 rounded-full bg-red-700/5 blur-[160px]" />
         <div className="absolute bottom-0 right-0 h-[28rem] w-[28rem] rounded-full bg-red-700/5 blur-[180px]" />
@@ -200,6 +198,8 @@ const Dashboard = () => {
             addingYoutube={addingYoutube}
             youtubeError={youtubeError}
             onResetYoutubeStatus={pdf.handleResetYoutubeStatus}
+            pendingManualTranscriptUrl={pendingManualTranscriptUrl}
+            onCancelManualTranscript={pdf.handleCancelManualTranscript}
           />
         </section>
       </div>
@@ -248,8 +248,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-
-
-
 

@@ -12,6 +12,7 @@ import {
     setUploadError,
     setAddingYoutube,
     setYoutubeError,
+    setPendingManualTranscriptUrl,
 } from "../pdf.slice";
 
 export const usePdf = () => {
@@ -41,24 +42,8 @@ export const usePdf = () => {
         }
     }
 
-    // Backend processes the whole pipeline (parse -> chunk -> embed ->
-    // store in Pinecone) in one synchronous call, so there's no real
-    // progress signal once the file finishes uploading. We track real
-    // upload % via axios, then cosmetically alternate between these
-    // labels until the actual response arrives — so it reflects
-    // whatever the real processing time turns out to be, instead of
-    // a fixed guess that might finish too early or too late.
     const PROCESSING_STAGES = ["Generating embeddings...", "Indexing in Pinecone..."]
     const PROCESSING_STAGE_MS = 1500
-
-    // On localhost/fast connections, the real upload can finish in a
-    // handful of milliseconds — axios reports 0% to 100% almost in one
-    // tick, so the bar never visibly fills before we switch to the
-    // processing card. This caps what we *display* by elapsed time, so
-    // it always takes at least this long to visibly reach 100%,
-    // regardless of how fast the transfer actually was. For a genuinely
-    // slow upload, the real percent naturally becomes the bottleneck
-    // instead (this cap stops mattering once real progress overtakes it).
     const MIN_UPLOAD_DISPLAY_MS = 700
 
     async function handleUploadDocument(file) {
@@ -127,15 +112,23 @@ export const usePdf = () => {
         dispatch(setUploadError(null))
     }
 
-    async function handleAddYoutubeVideo(url) {
+    async function handleAddYoutubeVideo(url, transcript) {
         dispatch(setAddingYoutube(true))
         dispatch(setYoutubeError(null))
 
         try {
-            await addYoutubeVideo(url)
+            await addYoutubeVideo(url, transcript)
+            dispatch(setPendingManualTranscriptUrl(null))
             await handleGetDocuments()
         } catch (error) {
             console.error("Failed to add YouTube video:", error)
+
+            if (error?.response?.data?.needsManualTranscript) {
+                dispatch(setPendingManualTranscriptUrl(url))
+            } else {
+                dispatch(setPendingManualTranscriptUrl(null))
+            }
+
             dispatch(setYoutubeError(
                 error?.response?.data?.message || "Couldn't add that video. Please try again."
             ))
@@ -145,6 +138,11 @@ export const usePdf = () => {
     }
 
     function handleResetYoutubeStatus() {
+        dispatch(setYoutubeError(null))
+    }
+
+    function handleCancelManualTranscript() {
+        dispatch(setPendingManualTranscriptUrl(null))
         dispatch(setYoutubeError(null))
     }
 
@@ -168,6 +166,7 @@ export const usePdf = () => {
         handleResetUploadStatus,
         handleAddYoutubeVideo,
         handleResetYoutubeStatus,
+        handleCancelManualTranscript,
         handleDeleteDocument,
         handleSelectDocument,
         handleDeselectDocument,
