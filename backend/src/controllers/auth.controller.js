@@ -201,10 +201,13 @@ export async function login(req, res) {
         username: user.username,
     }, process.env.JWT_SECRET, { expiresIn: '4d' })
 
+    const isProd = process.env.NODE_ENV === "production";
     res.cookie("token", token,{
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: isProd,
+    // "strict"/"lax" won't be sent cross-site (e.g. vercel.app -> onrender.com).
+    // "none" + secure is required for cross-origin cookies in production.
+    sameSite: isProd ? "none" : "lax",
     maxAge: 4 * 24 * 60 * 60 * 1000,
     });
 

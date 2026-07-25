@@ -10,8 +10,13 @@ const app = express();
 app.use(morgan("dev"));
 app.use(cookieParser());
 app.use(express.json());
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.FRONTEND_URL, // e.g. https://askquery.vercel.app
+].filter(Boolean);
+
 app.use(cors({
-  origin: ["http://localhost:5173", "http://192.168.29.238:5173"],
+  origin: allowedOrigins,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
 }))

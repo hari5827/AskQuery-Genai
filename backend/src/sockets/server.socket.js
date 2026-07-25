@@ -4,9 +4,14 @@ import { Server } from "socket.io";
 let io;
 
 export function initSocket(httpServer) {
+    const allowedOrigins = [
+        "http://localhost:5173",
+        process.env.FRONTEND_URL, // e.g. https://askquery.vercel.app
+    ].filter(Boolean);
+
     io = new Server(httpServer, {
         cors: {
-            origin: "http://localhost:5173",
+            origin: allowedOrigins,
             credentials: true,
         }
     })
