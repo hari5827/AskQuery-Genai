@@ -10,6 +10,8 @@ const pdfSlice = createSlice({
         uploadProgress: 0,
         uploadStageText: '',
         uploadError: null,
+        addingYoutube: false,
+        youtubeError: null,
     },
     reducers: {
         setDocuments: (state, action) => {
@@ -43,6 +45,12 @@ const pdfSlice = createSlice({
         setUploadError: (state, action) => {
             state.uploadError = action.payload
         },
+        setAddingYoutube: (state, action) => {
+            state.addingYoutube = action.payload
+        },
+        setYoutubeError: (state, action) => {
+            state.youtubeError = action.payload
+        },
     }
 })
 
@@ -56,5 +64,7 @@ export const {
     setUploadProgress,
     setUploadStageText,
     setUploadError,
+    setAddingYoutube,
+    setYoutubeError,
 } = pdfSlice.actions
 export default pdfSlice.reducer

@@ -24,6 +24,7 @@ const Dashboard = () => {
   const [chatInput, setChatInput] = useState("");
   const [webSearchOn, setWebSearchOn] = useState(false);
   const [pendingFirstMessage, setPendingFirstMessage] = useState(null);
+  const [youtubeMode, setYoutubeMode] = useState(false);
 
   const chats = useSelector((state) => state.chat.chats);
   const currentChatId = useSelector((state) => state.chat.currentChatId);
@@ -36,6 +37,8 @@ const Dashboard = () => {
   const uploadProgress = useSelector((state) => state.pdf.uploadProgress);
   const uploadStageText = useSelector((state) => state.pdf.uploadStageText);
   const uploadError = useSelector((state) => state.pdf.uploadError);
+  const addingYoutube = useSelector((state) => state.pdf.addingYoutube);
+  const youtubeError = useSelector((state) => state.pdf.youtubeError);
   const selectedDocument = selectedDocumentId ? documents[selectedDocumentId] : null;
 
   const [chatToDelete, setChatToDelete] = useState(null);
@@ -84,6 +87,12 @@ const Dashboard = () => {
     if (!trimmedMessage) return;
 
     setChatInput("");
+
+    if (youtubeMode) {
+      setYoutubeMode(false);
+      await pdf.handleAddYoutubeVideo(trimmedMessage);
+      return;
+    }
 
     // When a document is selected, questions go through the PDF
     // Q&A flow instead of the normal chats API. Continue the same
@@ -185,6 +194,12 @@ const Dashboard = () => {
             onFileSelected={pdf.handleUploadDocument}
             onInvalidFile={pdf.handleInvalidFile}
             onResetUploadStatus={pdf.handleResetUploadStatus}
+            youtubeMode={youtubeMode}
+            onEnterYoutubeMode={() => setYoutubeMode(true)}
+            onCancelYoutubeMode={() => setYoutubeMode(false)}
+            addingYoutube={addingYoutube}
+            youtubeError={youtubeError}
+            onResetYoutubeStatus={pdf.handleResetYoutubeStatus}
           />
         </section>
       </div>
@@ -233,5 +248,8 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+
+
 
 

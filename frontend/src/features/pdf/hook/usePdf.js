@@ -1,5 +1,5 @@
 import { useDispatch } from "react-redux";
-import { uploadDocument, getDocuments, deleteDocument } from "../service/pdf.api";
+import { uploadDocument, getDocuments, deleteDocument, addYoutubeVideo } from "../service/pdf.api";
 import {
     setDocuments,
     removeDocument,
@@ -10,6 +10,8 @@ import {
     setUploadProgress,
     setUploadStageText,
     setUploadError,
+    setAddingYoutube,
+    setYoutubeError,
 } from "../pdf.slice";
 
 export const usePdf = () => {
@@ -27,6 +29,8 @@ export const usePdf = () => {
                     originalName: doc.originalName,
                     status: doc.status,
                     createdAt: doc.createdAt,
+                    sourceType: doc.sourceType || "pdf",
+                    sourceUrl: doc.sourceUrl || null,
                 }
                 return acc
             }, {})))
@@ -123,6 +127,27 @@ export const usePdf = () => {
         dispatch(setUploadError(null))
     }
 
+    async function handleAddYoutubeVideo(url) {
+        dispatch(setAddingYoutube(true))
+        dispatch(setYoutubeError(null))
+
+        try {
+            await addYoutubeVideo(url)
+            await handleGetDocuments()
+        } catch (error) {
+            console.error("Failed to add YouTube video:", error)
+            dispatch(setYoutubeError(
+                error?.response?.data?.message || "Couldn't add that video. Please try again."
+            ))
+        } finally {
+            dispatch(setAddingYoutube(false))
+        }
+    }
+
+    function handleResetYoutubeStatus() {
+        dispatch(setYoutubeError(null))
+    }
+
     async function handleDeleteDocument(documentId) {
         await deleteDocument(documentId)
         dispatch(removeDocument(documentId))
@@ -141,6 +166,8 @@ export const usePdf = () => {
         handleUploadDocument,
         handleInvalidFile,
         handleResetUploadStatus,
+        handleAddYoutubeVideo,
+        handleResetYoutubeStatus,
         handleDeleteDocument,
         handleSelectDocument,
         handleDeselectDocument,

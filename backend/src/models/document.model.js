@@ -29,6 +29,17 @@ const documentSchema = new mongoose.Schema(
       enum: ["processing", "ready", "failed"],
       default: "processing",
     },
+
+    sourceType: {
+      type: String,
+      enum: ["pdf", "youtube"],
+      default: "pdf",
+    },
+
+    sourceUrl: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

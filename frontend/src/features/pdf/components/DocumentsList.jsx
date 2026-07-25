@@ -1,5 +1,5 @@
 import React from "react";
-import { FileText, Trash2 } from "lucide-react";
+import { FileText, SquarePlay, Trash2 } from "lucide-react";
 
 export function DocumentsList({
   documents,
@@ -29,7 +29,11 @@ export function DocumentsList({
                     : "hover:bg-white/5"
                 }`}
               >
-                <FileText size={16} className="shrink-0 text-zinc-500" />
+                {doc.sourceType === "youtube" ? (
+                  <SquarePlay size={16} className="shrink-0 text-red-500" />
+                ) : (
+                  <FileText size={16} className="shrink-0 text-zinc-500" />
+                )}
 
                 <div className="overflow-hidden">
                   <p className="truncate text-sm font-medium">

@@ -40,6 +40,11 @@ export const askDocument = async ({ question, documentId, chatId }) => {
     return response.data
 }
 
+export const addYoutubeVideo = async (url) => {
+    const response = await api.post("/api/youtube/add", { url })
+    return response.data
+}
+
 export const streamAskDocument = async ({ question, documentId, chatId }) => {
     const response = await fetch(`${BASE_URL}/api/pdf/ask/stream`, {
         method: "POST",

@@ -240,7 +240,7 @@ export const getDocuments = async (req, res) => {
     const documents = await Document.find({
       user: req.user.id,
     })
-      .select("originalName status createdAt")
+      .select("originalName status createdAt sourceType sourceUrl")
       .sort({ createdAt: -1 });
 
     return res.status(200).json({

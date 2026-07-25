@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Plus, FileUp, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Plus, FileUp, Loader2, CheckCircle2, XCircle, SquarePlay } from "lucide-react";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
@@ -11,6 +11,10 @@ export function UploadDocumentButton({
   uploadStageText,
   uploadError,
   onResetStatus,
+  onYoutubeModeSelect,
+  addingYoutube,
+  youtubeError,
+  onResetYoutubeStatus,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const fileInputRef = useRef(null);
@@ -35,7 +39,15 @@ export function UploadDocumentButton({
     }
   }, [uploadStatus, onResetStatus]);
 
-  const isBusy = uploadStatus === "uploading" || uploadStatus === "processing";
+  // Auto-clear the youtube error badge after a few seconds
+  useEffect(() => {
+    if (youtubeError) {
+      const timer = setTimeout(() => onResetYoutubeStatus(), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [youtubeError, onResetYoutubeStatus]);
+
+  const isBusy = uploadStatus === "uploading" || uploadStatus === "processing" || addingYoutube;
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -94,6 +106,18 @@ export function UploadDocumentButton({
             <FileUp size={15} />
             Upload PDF
           </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false);
+              onYoutubeModeSelect();
+            }}
+            className="flex w-full items-center gap-2 border-t border-white/5 px-4 py-3 text-sm text-zinc-300 transition hover:bg-red-700/10 hover:text-red-500"
+          >
+            <SquarePlay size={15} />
+            Add YouTube link
+          </button>
         </div>
       )}
 
@@ -140,8 +164,24 @@ export function UploadDocumentButton({
           {uploadError}
         </div>
       )}
+
+      {!menuOpen && addingYoutube && (
+        <div className="absolute bottom-full left-0 mb-2 flex w-56 items-center gap-2 whitespace-nowrap rounded-2xl border border-white/10 bg-[#111111] px-3.5 py-3 text-xs text-zinc-300 shadow-xl">
+          <Loader2 size={13} className="shrink-0 animate-spin text-red-400" />
+          Fetching transcript & indexing...
+        </div>
+      )}
+
+      {!menuOpen && youtubeError && (
+        <div className="absolute bottom-full left-0 mb-2 flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs text-red-400">
+          <XCircle size={13} />
+          {youtubeError}
+        </div>
+      )}
     </div>
   );
 }
 
 export default UploadDocumentButton;
+
+

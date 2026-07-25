@@ -1,35 +1,34 @@
 import { index } from "../config/pinecone.js";
+import crypto from "crypto";
 
 export const storeVectors = async (vectors, chunks, filename) => {
+  // Pinecone requires vector IDs to be plain ASCII. Titles/filenames can
+  // contain anything (emoji, "•", accented characters, etc.), so we hash
+  // the filename into a fixed, ASCII-only ID instead of using it directly.
+  // The human-readable filename is still stored as-is in metadata.source
+  // below (metadata values have no such restriction) - that's what
+  // retrieveContext filters on, so nothing else needs to change.
+  const idPrefix = crypto.createHash("md5").update(filename).digest("hex");
+
   const records = vectors.map((vector, i) => ({
-    id: `${filename}-${i}`,
+    id: `${idPrefix}-${i}`,
 
     values: vector,
 
     metadata: {
       text: chunks[i].pageContent,
-      page: chunks[i].metadata.loc.pageNumber,
+      page: chunks[i].metadata?.loc?.pageNumber ?? null,
       source: filename,
     },
   }));
-  console.log("Vectors:", vectors.length);
-console.log("Chunks:", chunks.length);
-console.log(records);
 
-console.log("Records Length:", records.length);
+  if (records.length === 0) {
+    throw new Error("No records generated");
+  }
 
-if (records.length === 0) {
-  throw new Error("No records generated");
-}
-
-console.log("First record:");
-console.dir(records[0], { depth: null });
-console.log(Array.isArray(records)); // should be true
-console.log(records.length);         // should be 4
-console.log(records[0].values.length); // should be 1024
- await index.upsert({
-  records,
-});
+  await index.upsert({
+    records,
+  });
 
   return records;
 };
