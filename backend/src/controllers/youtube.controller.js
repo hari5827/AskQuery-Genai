@@ -1,5 +1,6 @@
 import { Document as LangchainDocument } from "@langchain/core/documents";
 import { splitDocument } from "../utils/splitDocument.js";
+import Document from "../models/document.model.js";
 import { generateEmbeddings } from "../services/embedding.service.js";
 import { storeVectors } from "../services/vector.service.js";
 import {
