@@ -306,10 +306,7 @@ All routes above (except register/login/verify) require authentication via the `
 - [x] Streaming AI responses (SSE + Socket.io)
 - [x] YouTube video Q&A
 - [x] Redis caching layer
-- [ ] Multi-document conversations (chat across several PDFs at once)
-- [ ] Source-chunk highlighting in the UI
-- [ ] Docker Compose setup for one-command local deployment
-- [ ] Automated test suite (backend + frontend)
+
 
 ---
 
