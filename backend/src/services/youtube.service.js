@@ -1,78 +1,107 @@
-import { Innertube } from "youtubei.js";
-import { Document } from "@langchain/core/documents";
+import Document from "../models/document.model.js";
+import { splitDocument } from "../utils/splitDocument.js";
+import { generateEmbeddings } from "../services/embedding.service.js";
+import { storeVectors } from "../services/vector.service.js";
+import { LangchainDocument } from "@langchain/core/documents";
+import {
+  extractVideoId,
+  getVideoTitle,
+  loadYoutubeTranscript,
+} from "../services/youtube.service.js";
 
-// Covers watch?v=, youtu.be/, /shorts/, and /embed/ URL formats.
-const RE_YOUTUBE = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?/\s]{11})/i;
-
-export function extractVideoId(url) {
-  const match = String(url || "").match(RE_YOUTUBE);
-  return match ? match[1] : null;
-}
-
-// Uses YouTube's public oEmbed endpoint - no API key required, just
-// returns basic metadata (title, author, thumbnail) for a public video.
-export async function getVideoTitle(videoId) {
+export const addYoutubeVideo = async (req, res) => {
   try {
-    const res = await fetch(
-      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
-    );
-    if (!res.ok) return `YouTube Video (${videoId})`;
-    const data = await res.json();
-    return data.title || `YouTube Video (${videoId})`;
-  } catch (err) {
-    console.error("Failed to fetch video title:", err.message);
-    return `YouTube Video (${videoId})`;
-  }
-}
+    const { url, transcript } = req.body;
 
-// Innertube client setup is somewhat expensive (fetches player config etc.)
-// so we create it once and reuse it across requests instead of per-call.
-let innertubeClientPromise = null;
-function getInnertubeClient() {
-  if (!innertubeClientPromise) {
-    innertubeClientPromise = Innertube.create({
-      lang: "en",
-      location: "US",
-      retrieve_player: false,
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        message: "YouTube URL is required",
+      });
+    }
+
+    const videoId = extractVideoId(url);
+
+    if (!videoId) {
+      return res.status(400).json({
+        success: false,
+        message: "Could not find a video ID in that URL",
+      });
+    }
+
+    // Don't re-embed the same video twice for the same user.
+    const existing = await Document.findOne({
+      user: req.user.id,
+      fileName: videoId,
+      sourceType: "youtube",
+    });
+
+    if (existing) {
+      return res.status(200).json({
+        success: true,
+        message: "This video was already added",
+        document: existing,
+      });
+    }
+
+    const title = await getVideoTitle(videoId);
+
+    let docs;
+
+    if (transcript && transcript.trim().length > 0) {
+      // User pasted the transcript manually - skip automatic fetching entirely.
+      docs = [
+        new LangchainDocument({
+          pageContent: transcript.trim(),
+          metadata: { loc: { pageNumber: 1 } },
+        }),
+      ];
+    } else {
+      try {
+        docs = await loadYoutubeTranscript(videoId);
+      } catch (transcriptError) {
+        // Automatic fetching failed (common on cloud hosts - YouTube often
+        // blocks datacenter IPs). Let the frontend know it can offer a
+        // "paste transcript manually" option instead of just failing.
+        return res.status(422).json({
+          success: false,
+          needsManualTranscript: true,
+          message:
+            "Couldn't fetch this video's transcript automatically. You can paste it in manually instead.",
+        });
+      }
+    }
+
+    const chunks = await splitDocument(docs);
+    const vectors = await generateEmbeddings(chunks);
+
+    const source = `${title} • ${videoId}`;
+
+    const records = await storeVectors(vectors, chunks, source);
+
+    const document = await Document.create({
+      user: req.user.id,
+      originalName: source,
+      fileName: videoId,
+      pineconeIds: records.map((record) => record.id),
+      status: "ready",
+      sourceType: "youtube",
+      sourceUrl: url,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Video added successfully",
+      document,
+      totalChunks: chunks.length,
+      totalVectors: vectors.length,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to process video",
     });
   }
-  return innertubeClientPromise;
-}
-
-// Fetches the video's transcript and returns it as a single LangChain
-// Document, ready to be handed to the existing splitDocument() the same
-// way a PDF's pages are.
-export async function loadYoutubeTranscript(videoId) {
-  let segments;
-
-  try {
-    const yt = await getInnertubeClient();
-    const info = await yt.getInfo(videoId);
-    const transcriptData = await info.getTranscript();
-
-    const initialSegments =
-      transcriptData?.transcript?.content?.body?.initial_segments || [];
-
-    segments = initialSegments
-      .filter((seg) => seg?.snippet?.text)
-      .map((seg) => seg.snippet.text);
-  } catch (err) {
-    console.error("youtubei.js transcript fetch failed:", err.message);
-    throw new Error(
-      "Could not fetch a transcript for this video. It may not have captions available."
-    );
-  }
-
-  if (!segments || segments.length === 0) {
-    throw new Error("This video doesn't have any captions/transcript available.");
-  }
-
-  const fullText = segments.join(" ");
-
-  return [
-    new Document({
-      pageContent: fullText,
-      metadata: { loc: { pageNumber: 1 } },
-    }),
-  ];
-}
+};
