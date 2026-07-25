@@ -37,10 +37,8 @@ export async function loadYoutubeTranscript(videoId) {
   try {
     entries = await YoutubeTranscript.fetchTranscript(videoId);
   } catch (err) {
+    console.error("YoutubeTranscript.fetchTranscript failed:", err.message);
     throw new Error(
-      "Could not fetch a transcript for this video. It may not have captions available."
-    );
-     throw new Error(
       "Could not fetch a transcript for this video. It may not have captions available."
     );
   }
