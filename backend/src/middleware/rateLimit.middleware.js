@@ -36,7 +36,7 @@ export const loginLimiter = rateLimit({
 
 export const registerLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 8,
+  max: 15,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
