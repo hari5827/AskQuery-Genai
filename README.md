@@ -39,7 +39,8 @@ Under the hood, the app chunks and embeds source content, stores the vectors in 
 - 🔐 **Secure authentication** — JWT stored in HTTP-only cookies, with rate-limited login/register endpoints
 - 📧 **Email verification** — Gmail OAuth2 via Nodemailer, with a resend-verification flow [ now using Brevo email api]
 - 📄 **PDF upload & RAG chat** — parse, chunk, embed, and semantically search PDF content
-- ▶️ **YouTube Q&A** — drop in a video URL and chat with its transcript, using the same RAG pipeline
+- ▶️ **YouTube Q&A** —  ask questions about videos with publicly accessible transcripts (subject to YouTube availability)
+-                    > **Note:** Automatic transcript extraction depends on YouTube's public transcript availability and platform restrictions. Some videos may not support automatic transcript retrieval in deployed environments.
 - 🌐 **Live internet search mode** — a LangChain agent calls a Tavily search tool for up-to-date, non-document questions
 - ⚡ **Streaming responses** — answers stream back token-by-token over Server-Sent Events / Socket.io instead of waiting for the full response
 - 🧵 **Persistent chat history** — every conversation and message is saved per user in MongoDB, with auto-generated chat titles
@@ -316,6 +317,11 @@ All routes above (except register/login/verify) require authentication via the `
 https://github.com/user-attachments/assets/979e1fd5-a1f9-40b5-ba13-ddb96ad632cc
 
 -**▶️ YouTube RAG**
+----## ⚠️ Known Limitations
+
+- YouTube transcript extraction relies on publicly accessible transcripts.
+- Due to YouTube platform restrictions and anti-bot protections, transcript retrieval may fail for some videos in deployed environments.
+- PDF RAG and Web Search features are fully supported.
 
 https://github.com/user-attachments/assets/ac93df8a-cc69-4ca7-b27a-8447bac11620
 
