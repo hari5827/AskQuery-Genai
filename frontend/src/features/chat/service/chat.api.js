@@ -1,8 +1,6 @@
 import axios from "axios";
 
-export const API_BASE_URL = window.location.hostname === "localhost"
-    ? "http://localhost:3000"
-    : "http://192.168.29.238:3000";  // apna actual laptop IP daal
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
