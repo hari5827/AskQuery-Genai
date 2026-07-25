@@ -320,6 +320,40 @@ This project is licensed under the MIT License.
 - GitHub: [@hari5827](https://github.com/hari5827)
 - LinkedIn: [hariom-mishra](https://www.linkedin.com/in/hariom-mishra-b0880b255/)
 
+- **PROJECT WORKING DEMO**
+
+- **PDF UPLOAD RAG & AI STREAMING**
+  
+https://github.com/user-attachments/assets/979e1fd5-a1f9-40b5-ba13-ddb96ad632cc
+
+-**YOUTUBE LINK Q&A USING RAG**
+
+https://github.com/user-attachments/assets/ac93df8a-cc69-4ca7-b27a-8447bac11620
+
+-**TAVILY OFF INTERNET SEARCH RESPONSE**
+
+https://github.com/user-attachments/assets/20e91264-ce64-40fc-98e6-ff196953777a
+
+-**WEB SEARCH ON USING TAVILY**
+
+https://github.com/user-attachments/assets/36f8b2a6-dbcc-4163-96e8-070ccd9298a0
+
+-**SYNTAX HIGHLIGHTING**
+
+https://github.com/user-attachments/assets/0ebdfcb2-8475-4219-b137-94b7c6b05e1b
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## ⭐ Support
 
 If you found this project useful, please consider giving it a ⭐ on GitHub — it helps others discover it and supports future development.
