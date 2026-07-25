@@ -1,446 +1,317 @@
-AskQuery – AI Document Assistant using RAG
-AskQuery is a full-stack AI-powered document assistant that allows users to upload PDF documents and interact with them using Retrieval-Augmented Generation (RAG). The application combines semantic search, vector embeddings, large language models, and internet search to generate accurate, context-aware responses while maintaining secure authentication and persistent chat history
-
 <div align="center">
 
+# 📚 AskQuery — AI Document & Video Assistant (RAG)
+
+**Chat with your PDFs, YouTube videos, and the live web - powered by Retrieval-Augmented Generation.**
+
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Redux](https://img.shields.io/badge/Redux-593D88?style=for-the-badge&logo=redux&logoColor=white)
+![Redux](https://img.shields.io/badge/Redux_Toolkit-593D88?style=for-the-badge&logo=redux&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![Express](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![LangChain](https://img.shields.io/badge/LangChain-1C3C3C?style=for-the-badge&logo=chainlink&logoColor=white)
-![Pinecone](https://img.shields.io/badge/Pinecone-000000?style=for-the-badge&logo=vector&logoColor=white)
-![Mistral AI](https://img.shields.io/badge/Mistral_AI-EA5A0C?style=for-the-badge)
-![Gemini AI](https://img.shields.io/badge/Google_Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)
+![Pinecone](https://img.shields.io/badge/Pinecone-000000?style=for-the-badge)
+![Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)
+![Mistral](https://img.shields.io/badge/Mistral_AI-EA5A0C?style=for-the-badge)
+
 </div>
 
+---
+
+## 🧠 What is AskQuery?
+
+AskQuery is a full-stack, production-style RAG (Retrieval-Augmented Generation) application. Users can:
+
+- Upload a **PDF** and ask questions about its content
+- Paste a **YouTube link** and ask questions about the video (via its transcript)
+- Toggle **live internet search** to get answers grounded in current web results
+- Chat in real time, with **token-by-token streaming responses**
+
+Under the hood, the app chunks and embeds source content, stores the vectors in **Pinecone**, retrieves the most relevant chunks for a given question, and hands them to an LLM (**Gemini** or **Mistral**) — orchestrated with **LangChain** — to produce a grounded, cited answer. A LangChain **agent with a web-search tool** (Tavily) is used when internet mode is enabled, and **Redis** caches repeated searches/answers to cut latency and API cost.
+
+---
 
 ## ✨ Features
 
-- Secure JWT Authentication
-- Email Verification using Gmail OAuth2
-- PDF Upload & Management
-- Retrieval-Augmented Generation (RAG)
-- Semantic Search with Pinecone
-- Mistral Embeddings
-- LangChain Pipeline
-- Internet Search (Tavily)
-- Persistent Chat History
-- Markdown Rendering
-- Mathematical Formula Rendering (KaTeX)
-- Syntax Highlighting
-- Responsive UI
+- 🔐 **Secure authentication** — JWT stored in HTTP-only cookies, with rate-limited login/register endpoints
+- 📧 **Email verification** — Gmail OAuth2 via Nodemailer, with a resend-verification flow
+- 📄 **PDF upload & RAG chat** — parse, chunk, embed, and semantically search PDF content
+- ▶️ **YouTube Q&A** — drop in a video URL and chat with its transcript, using the same RAG pipeline
+- 🌐 **Live internet search mode** — a LangChain agent calls a Tavily search tool for up-to-date, non-document questions
+- ⚡ **Streaming responses** — answers stream back token-by-token over Server-Sent Events / Socket.io instead of waiting for the full response
+- 🧵 **Persistent chat history** — every conversation and message is saved per user in MongoDB, with auto-generated chat titles
+- 🚀 **Redis caching** — caches web-search results and repeated queries to reduce latency and third-party API usage
+- 🛡️ **Rate limiting** — dedicated limiters for login, register, upload, and ask endpoints to prevent abuse
+- 📝 **Rich message rendering** — Markdown, syntax-highlighted code blocks, and KaTeX-rendered math in the UI
+- 🗑️ **Full account/document/chat management** — delete individual documents, chats, or the whole account
+- 📱 **Responsive UI** built with React 19, Redux Toolkit, and Tailwind CSS
+
+---
 
 ## 🛠️ Tech Stack
 
-### **Frontend**
-
-- **Framework:** React 19, React Router DOM
-- **State Management:** Redux Toolkit
-- **Styling:** Tailwind CSS
-- **Networking:** Axios
-- **Markdown Rendering:** React Markdown
-- **Math Rendering:** KaTeX, remark-math, rehype-katex
-- **Code Highlighting:** React Syntax Highlighter
-- **Notifications:** React Hot Toast
-- **Icons:** Lucide React
-- **Build Tool:** Vite
-
-### **Backend**
-
-- **Runtime:** Node.js, Express.js
-- **Database:** MongoDB, Mongoose
-- **Authentication:** JWT, HTTP-Only Cookies
-- **Email Service:** Nodemailer (Gmail OAuth2)
-- **File Upload:** Multer
-- **Validation:** Validator
-- **Security:** CORS, Cookie Parser, Express Rate Limit
-- **Environment Management:** dotenv
-
-### **AI & RAG Pipeline**
-
-- **Framework:** LangChain
-- **LLM:** Mistral AI
-- **Embedding Model:** Mistral Embeddings
-- **Vector Database:** Pinecone
-- **Document Parsing:** pdf-parse
-- **Text Splitting:** RecursiveCharacterTextSplitter
-- **Internet Search:** Tavily Search API
-
-### **Development Tools**
-
-- **Version Control:** Git, GitHub
-- **Package Manager:** npm
-- **API Testing:** Postman
-
-## 🔄 Workflow Diagrams
-
-
-## 🏗️ Application Workflow
-
-```mermaid
-flowchart TD
-
-A[User] --> B[Register / Login]
-B --> C[JWT Authentication]
-C --> D[Chat Dashboard]
-
-D --> E{Choose Mode}
-
-E -->|Internet Search| F[Ask Question]
-
-E -->|PDF Chat| G[Upload PDF]
-
-G --> H[Validate PDF]
-H --> I[Store PDF]
-I --> J[Extract Text]
-J --> K[Split into Chunks]
-K --> L[Generate Embeddings]
-L --> M[Store Vectors in Pinecone]
-M --> N[Save Metadata in MongoDB]
-
-N --> F
-
-F --> O[Embed User Query]
-O --> P[Semantic Search]
-P --> Q[Retrieve Relevant Chunks]
-Q --> R[Build Prompt]
-R --> S[Mistral AI]
-S --> T[Generate AI Response]
-T --> U[Save Chat History]
-U --> V[Display Response]
-```
-- **Code Editor:** Visual Studio Code
-
-- ## 🔐 Authentication Flow
-
-```mermaid
-flowchart TD
-
-A[User] --> B[Register]
-B --> C[Validate User Data]
-C --> D[Create Account]
-D --> E[Send Verification Email]
-E --> F[Verify Email]
-
-F --> G[Login]
-
-G --> H[Validate Credentials]
-
-H --> I[Generate JWT]
-
-I --> J[Store HTTP Only Cookie]
-
-J --> K[Protected Routes]
-
-K --> L[Dashboard]
-```
-
-## 📄 PDF Processing Workflow
-
-```mermaid
-flowchart TD
-
-A[Upload PDF]
-
-A --> B[Validate File]
-
-B --> C[Store File]
-
-C --> D[Extract Text]
-
-D --> E[Split into Chunks]
-
-E --> F[Generate Embeddings]
-
-F --> G[Store Embeddings in Pinecone]
-
-G --> H[Save Metadata in MongoDB]
-
-H --> I[Ready for AI Chat]
-```
-
-## 🤖 RAG Pipeline
-
-```mermaid
-flowchart TD
-
-A[User Question]
-
-A --> B[Generate Query Embedding]
-
-B --> C[Semantic Search]
-
-C --> D[Pinecone Vector Database]
-
-D --> E[Retrieve Similar Chunks]
-
-E --> F[Build Context]
-
-F --> G[Generate Prompt]
-
-G --> H[Mistral AI]
-
-H --> I[Generate Answer]
-
-I --> J[Return Response]
-```
-
-## 🌐 Internet Search Workflow
-
-```mermaid
-flowchart TD
-
-A[User Question]
-
-A --> B[Internet Search Enabled]
-
-B --> C[Tavily Search API]
-
-C --> D[Retrieve Web Results]
-
-D --> E[Build Prompt]
-
-E --> F[Mistral AI]
-
-F --> G[Generate AI Response]
-
-G --> H[Display Response]
-```
-
-## 💬 Chat Request Flow
-
-```mermaid
-sequenceDiagram
-
-participant User
-participant Frontend
-participant Backend
-participant Pinecone
-participant Mistral
-participant MongoDB
-
-User->>Frontend: Ask Question
-
-Frontend->>Backend: POST /api/chat/ask
-
-Backend->>Pinecone: Semantic Search
-
-Pinecone-->>Backend: Relevant Chunks
-
-Backend->>Mistral: Prompt + Context
-
-Mistral-->>Backend: AI Response
-
-Backend->>MongoDB: Save Chat
-
-MongoDB-->>Backend: Success
-
-Backend-->>Frontend: Response
-
-Frontend-->>User: Display Answer
-```
+### Frontend
+| Category | Tech |
+|---|---|
+| Framework | React 19, React Router |
+| State management | Redux Toolkit |
+| Styling | Tailwind CSS |
+| Networking | Axios, Socket.io Client |
+| Markdown / Math / Code | react-markdown, remark-gfm, remark-math, rehype-katex (KaTeX), react-syntax-highlighter |
+| Notifications | React Hot Toast |
+| Icons | Lucide React |
+| Build tool | Vite |
+
+### Backend
+| Category | Tech |
+|---|---|
+| Runtime | Node.js, Express.js |
+| Real-time | Socket.io |
+| Database | MongoDB + Mongoose |
+| Cache | Redis (ioredis) |
+| Auth | JWT, HTTP-only cookies, custom auth middleware |
+| Email | Nodemailer with Gmail OAuth2 |
+| File upload | Multer |
+| Validation | validator |
+| Security | CORS, cookie-parser, express-rate-limit |
+| Logging | Morgan |
+
+### AI / RAG Pipeline
+| Category | Tech |
+|---|---|
+| Orchestration | LangChain (`langchain`, `@langchain/core`) |
+| LLMs | Google Gemini (`@langchain/google-genai`), Mistral AI (`@langchain/mistralai`) |
+| Embeddings | Mistral Embeddings (`mistral-embed`) |
+| Vector database | Pinecone |
+| Agent tools | Custom `searchInternet` tool backed by Tavily Search API |
+| PDF parsing | `pdf-parse` |
+| YouTube transcripts | `youtube-transcript` |
+| Chunking | LangChain `RecursiveCharacterTextSplitter` |
+| Schema validation | Zod |
+
+---
 
 ## 🏛️ System Architecture
 
 ```mermaid
 flowchart LR
-
-A[React Frontend]
-
-A --> B[Express Backend]
-
-B --> C[JWT Authentication]
-
-B --> D[MongoDB]
-
-B --> E[LangChain]
-
-E --> F[Mistral AI]
-
-E --> G[Pinecone]
-
-E --> H[Tavily Search]
-
-B --> I[PDF Parser]
-
-I --> E
-
-G --> E
-
-F --> B
-
-B --> A
+    A[React Frontend] -->|REST + SSE| B[Express Backend]
+    A -->|WebSocket| S[Socket.io]
+    B --> C[JWT Auth Middleware]
+    B --> D[(MongoDB)]
+    B --> R[(Redis Cache)]
+    B --> E[LangChain Layer]
+    E --> F[Gemini / Mistral LLM]
+    E --> G[(Pinecone Vector DB)]
+    E --> H[Tavily Web Search]
+    B --> I[PDF Parser]
+    B --> Y[YouTube Transcript Fetcher]
+    I --> E
+    Y --> E
+    G --> E
+    F --> B
+    S --> B
 ```
 
-## 🗂️ Document Upload Flow
+## 🤖 RAG Query Flow
 
 ```mermaid
 flowchart TD
-
-A[Select PDF]
-
-A --> B[Validate Size & Type]
-
-B --> C[Upload to Server]
-
-C --> D[Save File]
-
-D --> E[Extract Text]
-
-E --> F[Split into Chunks]
-
-F --> G[Generate Embeddings]
-
-G --> H[Store in Pinecone]
-
-H --> I[Save Metadata]
-
-I --> J[Upload Complete]
+    A[User Question] --> B[Embed Query - Mistral]
+    B --> C[Semantic Search in Pinecone]
+    C --> D[Retrieve Top-K Relevant Chunks]
+    D --> E[Build Context + Prompt]
+    E --> F{Web Search Enabled?}
+    F -->|Yes| G[LangChain Agent + Tavily Tool]
+    F -->|No| H[Direct LLM Call - Gemini / Mistral]
+    G --> I[Stream Answer to Client]
+    H --> I
+    I --> J[Persist Chat + Message in MongoDB]
 ```
+
+## 📄 Document / Video Ingestion Flow
+
+```mermaid
+flowchart TD
+    A[Upload PDF or Paste YouTube URL] --> B[Extract Text / Fetch Transcript]
+    B --> C[Split into Chunks]
+    C --> D[Generate Embeddings - Mistral]
+    D --> E[Upsert Vectors into Pinecone]
+    E --> F[Save Metadata in MongoDB]
+    F --> G[Ready for Chat]
+```
+
+## 🔐 Authentication Flow
+
+```mermaid
+flowchart TD
+    A[Register] --> B[Validate + Rate Limit]
+    B --> C[Create Account]
+    C --> D[Send Verification Email - Gmail OAuth2]
+    D --> E[User Verifies Email]
+    E --> F[Login]
+    F --> G[Validate Credentials]
+    G --> H[Issue JWT]
+    H --> I[Set HTTP-only Cookie]
+    I --> J[Access Protected Routes]
+```
+
+---
 
 ## 📂 Project Structure
 
-```mermaid
-graph TD
-
-A[AskQuery]
-
-A --> B[Frontend]
-
-B --> B1[src]
-
-B1 --> B11[components]
-B1 --> B12[pages]
-B1 --> B13[layouts]
-B1 --> B14[features]
-B1 --> B15[hooks]
-B1 --> B16[services]
-B1 --> B17[utils]
-B1 --> B18[assets]
-
-B --> B2[public]
-
-B --> B3[vite.config.js]
-
-A --> C[Backend]
-
-C --> C1[src]
-
-C1 --> C11[controllers]
-C1 --> C12[routes]
-C1 --> C13[middleware]
-C1 --> C14[models]
-C1 --> C15[services]
-C1 --> C16[utils]
-C1 --> C17[config]
-C1 --> C18[uploads]
-
-C --> C2[server.js]
-
-C --> C3[package.json]
-
-A --> D[README.md]
+```
+AskQuery-Genai/
+├── frontend/
+│   ├── src/
+│   │   ├── app/                 # App shell, routes, store, global CSS
+│   │   └── features/
+│   │       ├── auth/            # Login/Register pages, auth slice & API
+│   │       ├── chat/            # Chat UI, socket service, chat slice
+│   │       └── pdf/             # Document upload/list, pdf slice
+│   ├── public/
+│   └── vite.config.js
+│
+└── backend/
+    ├── server.js                # Entry point (HTTP server + Socket.io)
+    └── src/
+        ├── app.js               # Express app & route mounting
+        ├── config/               # MongoDB, Redis, Pinecone config
+        ├── controllers/          # auth, chat, pdf, youtube controllers
+        ├── middleware/           # auth, upload (Multer), rate limiting
+        ├── models/                # User, Chat, Message, Document (Mongoose)
+        ├── routes/                # /api/auth, /api/chats, /api/pdf, /api/youtube
+        ├── services/              # ai, rag, embedding, vector, internet, cache, pdf, youtube, mail
+        ├── sockets/               # Socket.io server setup
+        ├── utils/                 # prompt builder, document splitter
+        └── validator/             # request validation
 ```
 
-## 🚀 Installation
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v18+ recommended)
+- MongoDB instance (local or Atlas)
+- Redis instance (local or hosted, e.g. Upstash/Redis Cloud)
+- API keys for: Google Gemini, Mistral AI, Pinecone, Tavily
+- A Google account configured for Gmail OAuth2 (for verification emails)
 
 ### 1. Clone the repository
-
 ```bash
 git clone https://github.com/hari5827/AskQuery-Genai.git
+cd AskQuery-Genai
 ```
 
-### 2. Install Backend Dependencies
-
+### 2. Backend setup
 ```bash
 cd backend
 npm install
 ```
+Create a `.env` file inside `backend/` (see [Environment Variables](#-environment-variables) below), then start the server:
+```bash
+npm run dev
+```
 
-### 3. Install Frontend Dependencies
-
+### 3. Frontend setup
 ```bash
 cd ../frontend
 npm install
-```
-
-### 4. Configure Environment Variables
-
-Create a `.env` file inside the backend directory.
-
-### 5. Start Backend
-
-```bash
 npm run dev
 ```
 
-### 6. Start Frontend
+The frontend runs on Vite's default dev server, and the backend listens on the port set by `PORT` in your `.env`.
 
-```bash
-npm run dev
-```
+---
 
 ## 🔑 Environment Variables
 
-Create a `.env` file inside the **backend** folder.
+Create a `.env` file inside the **backend** folder:
 
 ```env
-PORT=
+# Server
+PORT=3000
+NODE_ENV=development
 
-MONGO_URI=
+# Database & Cache
+mongo_uri=your_mongodb_connection_string
+REDIS_URL=redis://localhost:6379
 
-JWT_SECRET=
+# Auth
+JWT_SECRET=your_jwt_secret
 
+# Gmail OAuth2 (for verification emails)
 GOOGLE_CLIENT_ID=
-
 GOOGLE_CLIENT_SECRET=
-
 GOOGLE_REFRESH_TOKEN=
+GOOGLE_USER=
 
-GOOGLE_EMAIL=
-
+# AI / Vector / Search providers
+ASKQUERY_API_KEY=       # Google Gemini API key
 MISTRAL_API_KEY=
-
 PINECONE_API_KEY=
-
 TAVILY_API_KEY=
 ```
 
-## 📡 API Endpoints
+> **Note:** In Pinecone, create an index named `askquery` before running the app (see `backend/src/config/pinecone.js`).
 
-### Authentication
+---
 
-| Method | Endpoint |
-|--------|----------|
-| POST | `/api/auth/register` |
-| POST | `/api/auth/login` |
-| POST | `/api/auth/logout` |
-| GET | `/api/auth/me` |
-| POST | `/api/auth/verify-email` |
+## 📡 API Reference
 
-### PDF
+### Auth — `/api/auth`
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/register` | Create a new account (rate-limited) |
+| POST | `/login` | Log in, receive JWT cookie (rate-limited) |
+| GET | `/verify-email` | Verify email via emailed link/token |
+| POST | `/resend-verification` | Resend the verification email |
+| GET | `/get-me` | Get the current authenticated user |
+| POST | `/logout` | Clear auth cookie |
+| DELETE | `/delete-account` | Permanently delete the account |
 
-| Method | Endpoint |
-|--------|----------|
-| POST | `/api/pdf/upload` |
-| GET | `/api/pdf` |
-| DELETE | `/api/pdf/:id` |
+### Chat — `/api/chats`
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/message` | Send a message, get a full response |
+| POST | `/message/stream` | Send a message, get a streamed (SSE) response |
+| GET | `/` | List all chats for the current user |
+| GET | `/:chatId/messages` | Get all messages in a chat |
+| DELETE | `/delete/:chatId` | Delete a chat |
 
-### Chat
+### PDF / Documents — `/api/pdf`
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/upload` | Upload a PDF (max 10 MB), chunk + embed + store in Pinecone |
+| POST | `/ask` | Ask a question about an uploaded document |
+| POST | `/ask/stream` | Streamed version of `/ask` |
+| GET | `/documents` | List all uploaded documents |
+| DELETE | `/:documentId` | Delete a document and its vectors |
 
-| Method | Endpoint |
-|--------|----------|
-| POST | `/api/chat/ask` |
-| GET | `/api/chat/history` |
-| DELETE | `/api/chat/:id` |
+### YouTube — `/api/youtube`
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/add` | Submit a YouTube URL; transcript is fetched, chunked, and embedded |
 
-## 🚀 Upcoming Features
+All routes above (except register/login/verify) require authentication via the `authUser` middleware, and upload/ask/auth routes are protected by dedicated rate limiters.
 
-- [x] Streaming AI Responses
-- [x] YouTube Video Q&A
-- [x] Redis Caching
+---
+
+## 🗺️ Roadmap
+
+- [x] Streaming AI responses (SSE + Socket.io)
+- [x] YouTube video Q&A
+- [x] Redis caching layer
+- [ ] Multi-document conversations (chat across several PDFs at once)
+- [ ] Source-chunk highlighting in the UI
+- [ ] Docker Compose setup for one-command local deployment
+- [ ] Automated test suite (backend + frontend)
+
+---
 
 ## 📄 License
 
@@ -449,11 +320,9 @@ This project is licensed under the MIT License.
 ## 👨‍💻 Author
 
 **Hariom Mishra**
+- GitHub: [@hari5827](https://github.com/hari5827)
+- LinkedIn: [hariom-mishra](https://www.linkedin.com/in/hariom-mishra-b0880b255/)
 
-- GitHub: https://github.com/hari5827
-- LinkedIn: https://www.linkedin.com/in/hariom-mishra-b0880b255/
+## ⭐ Support
 
-  ## ⭐ Support
-
-If you found this project helpful, consider giving it a ⭐ on GitHub.
-It helps others discover the project and supports future development.
+If you found this project useful, please consider giving it a ⭐ on GitHub — it helps others discover it and supports future development.
