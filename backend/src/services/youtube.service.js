@@ -40,6 +40,9 @@ export async function loadYoutubeTranscript(videoId) {
     throw new Error(
       "Could not fetch a transcript for this video. It may not have captions available."
     );
+     throw new Error(
+      "Could not fetch a transcript for this video. It may not have captions available."
+    );
   }
 
   if (!entries || entries.length === 0) {
