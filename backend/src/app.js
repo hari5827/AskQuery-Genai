@@ -7,6 +7,7 @@ import chatRouter from "./routes/chat.routes.js";
 import pdfRoutes from "./routes/pdf.routes.js";
 import youtubeRoutes from "./routes/youtube.routes.js";
 const app = express();
+app.set("trust proxy", 1);
 app.use(morgan("dev"));
 app.use(cookieParser());
 app.use(express.json());
