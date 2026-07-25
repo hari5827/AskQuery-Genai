@@ -16,7 +16,7 @@
 ![Pinecone](https://img.shields.io/badge/Pinecone-000000?style=for-the-badge)
 ![Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)
 ![Mistral](https://img.shields.io/badge/Mistral_AI-EA5A0C?style=for-the-badge)
-
+![Brevo](https://img.shields.io/badge/Brevo-Email%20API-0B996E?style=for-the-badge&logo=brevo&logoColor=white)
 </div>
 
 ---
@@ -346,6 +346,10 @@ This project is licensed under the MIT License.
 **Hariom Mishra**
 - GitHub: [@hari5827](https://github.com/hari5827)
 - LinkedIn: [hariom-mishra](https://www.linkedin.com/in/hariom-mishra-b0880b255/)
+- AskQuery : [Live Website](https://ask-query-genai.vercel.app/login)
+
+> **Note:** Using Brevo email api instead oauth2 due to render restriction.
+
 
 ## ⭐ Support
 
