@@ -1,8 +1,8 @@
-import { Document as LangchainDocument } from "@langchain/core/documents";
-import { splitDocument } from "../utils/splitDocument.js";
 import Document from "../models/document.model.js";
+import { splitDocument } from "../utils/splitDocument.js";
 import { generateEmbeddings } from "../services/embedding.service.js";
 import { storeVectors } from "../services/vector.service.js";
+import { Document as LangchainDocument } from "@langchain/core/documents";
 import {
   extractVideoId,
   getVideoTitle,
@@ -11,7 +11,7 @@ import {
 
 export const addYoutubeVideo = async (req, res) => {
   try {
-    const { url } = req.body;
+    const { url, transcript } = req.body;
 
     if (!url) {
       return res.status(400).json({
@@ -45,16 +45,36 @@ export const addYoutubeVideo = async (req, res) => {
     }
 
     const title = await getVideoTitle(videoId);
-    const docs = await loadYoutubeTranscript(videoId);
+
+    let docs;
+
+    if (transcript && transcript.trim().length > 0) {
+      // User pasted the transcript manually - skip automatic fetching entirely.
+      docs = [
+        new LangchainDocument({
+          pageContent: transcript.trim(),
+          metadata: { loc: { pageNumber: 1 } },
+        }),
+      ];
+    } else {
+      try {
+        docs = await loadYoutubeTranscript(videoId);
+      } catch (transcriptError) {
+        // Automatic fetching failed (common on cloud hosts - YouTube often
+        // blocks datacenter IPs). Let the frontend know it can offer a
+        // "paste transcript manually" option instead of just failing.
+        return res.status(422).json({
+          success: false,
+          needsManualTranscript: true,
+          message:
+            "Couldn't fetch this video's transcript automatically. You can paste it in manually instead.",
+        });
+      }
+    }
+
     const chunks = await splitDocument(docs);
     const vectors = await generateEmbeddings(chunks);
 
-    // Unique per-video key: this becomes both the Document's
-    // originalName (what's shown in the sidebar) AND the Pinecone
-    // `source` filter that askQuestion/askQuestionStream already use
-    // unchanged. Including the videoId guarantees it can't collide
-    // with another video, or a PDF, that happens to share the exact
-    // same title.
     const source = `${title} • ${videoId}`;
 
     const records = await storeVectors(vectors, chunks, source);
