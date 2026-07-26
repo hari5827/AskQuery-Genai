@@ -338,7 +338,7 @@ All routes above (except register/login/verify-email) require authentication via
 - [x] YouTube video Q&A
 - [x] Redis caching layer
 - [x] Manual transcript fallback for blocked YouTube fetches
-- [ ] Optional proxy/residential-IP support for more reliable automatic YouTube transcript fetching in production
+
 
 ---
 
