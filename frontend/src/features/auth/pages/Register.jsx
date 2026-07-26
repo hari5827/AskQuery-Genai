@@ -4,6 +4,7 @@ import AuthLayout from "../components/AuthLayout";
 import LoginTransition from "../components/LoginTransition";
 import { useAuth } from "../hook/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 const Register = () => {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
@@ -11,21 +12,40 @@ const Register = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showTransition, setShowTransition] = useState(false);
     const { handleRegister } = useAuth();
-  
+    const error = useSelector((state) => state.auth.error);
+
     const navigate = useNavigate();
    const handleSubmit = async (e) => {
   e.preventDefault();
-  await handleRegister({ email, username, password });
-  setShowTransition(true);
+  const success = await handleRegister({ email, username, password });
+  if (success) {
+    setShowTransition(true);
+  }
 };
 
     if (showTransition) {
-        return <LoginTransition onComplete={() => navigate("/")} />
+        return (
+            <LoginTransition
+                onComplete={() =>
+                    navigate("/login", {
+                        state: {
+                            message:
+                                "Account created! A verification link has been sent to your registered email — please verify it before logging in.",
+                        },
+                    })
+                }
+            />
+        );
     }
 
     return (
         <AuthLayout title="Create account" subtitle="Join and Solve your queries">
             <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                    <div className="rounded-xl border border-red-700/30 bg-red-700/10 px-4 py-3 text-sm text-red-300">
+                        {error}
+                    </div>
+                )}
                 <label className="block">
                     <span className="text-sm text-zinc-400">Username</span>
                     <input

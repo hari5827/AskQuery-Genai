@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Link ,useNavigate,Navigate} from "react-router-dom";
+import { Link ,useNavigate,Navigate,useLocation} from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
 import LoginTransition from "../components/LoginTransition";
 import { useSelector } from 'react-redux'
@@ -11,6 +11,8 @@ const Login = () => {
     const [ password, setPassword ] = useState('')
     const [showPassword, setShowPassword] = useState(false)
     const [showTransition, setShowTransition] = useState(false)
+    const location = useLocation()
+    const [infoMessage, setInfoMessage] = useState(location.state?.message || null)
     // handleLogin's own setLoading(false)/setUser() dispatches cause a
     // re-render before this function's next line runs — that re-render
     // would otherwise hit the "already logged in" redirect below before
@@ -57,6 +59,19 @@ const Login = () => {
     return (
         <AuthLayout title="Welcome back" subtitle="Sign in to your account">
             <form onSubmit={submitForm} className="space-y-4">
+                {infoMessage && (
+                    <div className="flex items-start justify-between gap-2 rounded-xl border border-emerald-700/30 bg-emerald-700/10 px-4 py-3 text-sm text-emerald-300">
+                        <span>{infoMessage}</span>
+                        <button
+                            type="button"
+                            onClick={() => setInfoMessage(null)}
+                            className="shrink-0 text-emerald-400 hover:text-emerald-200"
+                            aria-label="Dismiss"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                )}
                 <label className="block">
                     <span className="text-sm text-zinc-400">Email</span>
                     <input
