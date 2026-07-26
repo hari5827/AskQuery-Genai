@@ -17,6 +17,8 @@
 ![Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)
 ![Mistral](https://img.shields.io/badge/Mistral_AI-EA5A0C?style=for-the-badge)
 ![Brevo](https://img.shields.io/badge/Brevo-Email%20API-0B996E?style=for-the-badge&logo=brevo&logoColor=white)
+![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 </div>
 
 ---
@@ -37,10 +39,9 @@ Under the hood, the app chunks and embeds source content, stores the vectors in 
 ## ✨ Features
 
 - 🔐 **Secure authentication** — JWT stored in HTTP-only cookies, with rate-limited login/register endpoints
-- 📧 **Email verification** — Gmail OAuth2 via Nodemailer, with a resend-verification flow [ now using Brevo email api]
+- 📧 **Email verification** — transactional emails sent via **Brevo's API** on registration
 - 📄 **PDF upload & RAG chat** — parse, chunk, embed, and semantically search PDF content
-- ▶️ **YouTube Q&A** —  ask questions about videos with publicly accessible transcripts (subject to YouTube availability)
--                    > **Note:** Automatic transcript extraction depends on YouTube's public transcript availability and platform restrictions. Some videos may not support automatic transcript retrieval in deployed environments.
+- ▶️ **YouTube Q&A** — ask questions about videos via their transcript (fetched automatically using `youtubei.js`). On cloud deployments, YouTube's anti-bot protections can occasionally block automatic fetching — when that happens, the app falls back to a **manual transcript paste** flow instead of failing outright, so the feature stays usable regardless of environment
 - 🌐 **Live internet search mode** — a LangChain agent calls a Tavily search tool for up-to-date, non-document questions
 - ⚡ **Streaming responses** — answers stream back token-by-token over Server-Sent Events / Socket.io instead of waiting for the full response
 - 🧵 **Persistent chat history** — every conversation and message is saved per user in MongoDB, with auto-generated chat titles
@@ -74,7 +75,7 @@ Under the hood, the app chunks and embeds source content, stores the vectors in 
 | Database | MongoDB + Mongoose |
 | Cache | Redis (ioredis) |
 | Auth | JWT, HTTP-only cookies, custom auth middleware |
-| Email | Brevo email api |
+| Email | Brevo Email API |
 | File upload | Multer |
 | Validation | validator |
 | Security | CORS, cookie-parser, express-rate-limit |
@@ -89,7 +90,7 @@ Under the hood, the app chunks and embeds source content, stores the vectors in 
 | Vector database | Pinecone |
 | Agent tools | Custom `searchInternet` tool backed by Tavily Search API |
 | PDF parsing | `pdf-parse` |
-| YouTube transcripts | `youtube-transcript` |
+| YouTube transcripts | `youtubei.js` (with a manual-paste fallback when automatic fetching is blocked) |
 | Chunking | LangChain `RecursiveCharacterTextSplitter` |
 | Schema validation | Zod |
 
@@ -137,12 +138,17 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[Upload PDF or Paste YouTube URL] --> B[Extract Text / Fetch Transcript]
-    B --> C[Split into Chunks]
-    C --> D[Generate Embeddings - Mistral]
-    D --> E[Upsert Vectors into Pinecone]
-    E --> F[Save Metadata in MongoDB]
-    F --> G[Ready for Chat]
+    A[Upload PDF or Paste YouTube URL] --> B{Transcript / Text available?}
+    B -->|PDF| C[Extract Text]
+    B -->|YouTube - auto fetch succeeds| D[Fetch Transcript via youtubei.js]
+    B -->|YouTube - auto fetch fails| P[User Pastes Transcript Manually]
+    C --> E[Split into Chunks]
+    D --> E
+    P --> E
+    E --> F[Generate Embeddings - Mistral]
+    F --> G[Upsert Vectors into Pinecone]
+    G --> H[Save Metadata in MongoDB]
+    H --> I[Ready for Chat]
 ```
 
 ## 🔐 Authentication Flow
@@ -151,7 +157,7 @@ flowchart TD
 flowchart TD
     A[Register] --> B[Validate + Rate Limit]
     B --> C[Create Account]
-    C --> D[Send Verification Email - Gmail OAuth2]
+    C --> D[Send Verification Email - Brevo API]
     D --> E[User Verifies Email]
     E --> F[Login]
     F --> G[Validate Credentials]
@@ -172,12 +178,13 @@ AskQuery-Genai/
 │   │   └── features/
 │   │       ├── auth/            # Login/Register pages, auth slice & API
 │   │       ├── chat/            # Chat UI, socket service, chat slice
-│   │       └── pdf/             # Document upload/list, pdf slice
+│   │       └── pdf/             # Document upload/list, YouTube add, pdf slice
 │   ├── public/
 │   └── vite.config.js
 │
 └── backend/
     ├── server.js                # Entry point (HTTP server + Socket.io)
+    ├── render.yaml               # Render deployment config
     └── src/
         ├── app.js               # Express app & route mounting
         ├── config/               # MongoDB, Redis, Pinecone config
@@ -199,8 +206,7 @@ AskQuery-Genai/
 - Node.js (v18+ recommended)
 - MongoDB instance (local or Atlas)
 - Redis instance (local or hosted, e.g. Upstash/Redis Cloud)
-- API keys for: Google Gemini, Mistral AI, Pinecone, Tavily
-- A Google account configured for Gmail OAuth2 (for verification emails)
+- API keys for: Google Gemini, Mistral AI, Pinecone, Tavily, Brevo
 
 ### 1. Clone the repository
 ```bash
@@ -211,7 +217,7 @@ cd AskQuery-Genai
 ### 2. Backend setup
 ```bash
 cd backend
-npm install
+npm install --legacy-peer-deps
 ```
 Create a `.env` file inside `backend/` (see [Environment Variables](#-environment-variables) below), then start the server:
 ```bash
@@ -225,7 +231,7 @@ npm install
 npm run dev
 ```
 
-The frontend runs on Vite's default dev server, and the backend listens on the port set by `PORT` in your `.env`.
+The frontend runs on Vite's default dev server, and the backend listens on the port set by `PORT` in your `.env` (in production on Render, this is injected automatically — see [Deployment](#-deployment)).
 
 ---
 
@@ -235,8 +241,8 @@ Create a `.env` file inside the **backend** folder:
 
 ```env
 # Server
-PORT=3000
 NODE_ENV=development
+PORT=3000                 # For local dev only - do NOT set this manually on Render
 
 # Database & Cache
 mongo_uri=your_mongodb_connection_string
@@ -245,11 +251,13 @@ REDIS_URL=redis://localhost:6379
 # Auth
 JWT_SECRET=your_jwt_secret
 
-# Gmail OAuth2 (for verification emails)
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-GOOGLE_REFRESH_TOKEN=
-GOOGLE_USER=
+# Email (Brevo)
+BREVO_API_KEY=
+BREVO_SENDER_EMAIL=       # must be a sender verified in your Brevo account
+
+# URLs (used for CORS and links inside verification emails)
+FRONTEND_URL=http://localhost:5173
+BACKEND_URL=http://localhost:3000
 
 # AI / Vector / Search providers
 ASKQUERY_API_KEY=       # Google Gemini API key
@@ -259,6 +267,29 @@ TAVILY_API_KEY=
 ```
 
 > **Note:** In Pinecone, create an index named `askquery` before running the app (see `backend/src/config/pinecone.js`).
+
+And in the **frontend** folder, create a `.env` (or `.env.production` for deployment):
+```env
+VITE_API_URL=http://localhost:3000
+```
+
+---
+
+## 🌐 Deployment
+
+- **Backend**: [Render](https://render.com) (Node web service, config in `backend/render.yaml`)
+- **Frontend**: [Vercel](https://vercel.com) (Vite static build, project root directory set to `frontend`)
+
+### Render-specific notes
+- Don't hardcode `PORT` as an env var in production — Render assigns it dynamically and the app already reads `process.env.PORT`. Setting it manually causes Render's internal health check to time out against the wrong port.
+- `app.set("trust proxy", 1)` is required in `app.js` so `express-rate-limit` can correctly read the `X-Forwarded-For` header Render's reverse proxy adds to every request.
+- Build command is `npm install --legacy-peer-deps` — resolves a peer dependency version conflict between `@langchain/community` and `zod`.
+- Outbound email uses Brevo's HTTPS API rather than raw SMTP, since Render's network has had inconsistent connectivity to SMTP ports for some providers.
+
+### Vercel-specific notes
+- Set **Root Directory** to `frontend` when importing the repo (it's a monorepo with `backend/` alongside it).
+- Set **Framework Preset** to `Vite` explicitly and save — if left on "Other," the build will look for a `build/` output folder instead of Vite's `dist/`.
+- Add `VITE_API_URL` pointing at your deployed Render backend URL under Environment Variables.
 
 ---
 
@@ -270,7 +301,6 @@ TAVILY_API_KEY=
 | POST | `/register` | Create a new account (rate-limited) |
 | POST | `/login` | Log in, receive JWT cookie (rate-limited) |
 | GET | `/verify-email` | Verify email via emailed link/token |
-| POST | `/resend-verification` | Resend the verification email |
 | GET | `/get-me` | Get the current authenticated user |
 | POST | `/logout` | Clear auth cookie |
 | DELETE | `/delete-account` | Permanently delete the account |
@@ -296,9 +326,9 @@ TAVILY_API_KEY=
 ### YouTube — `/api/youtube`
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/add` | Submit a YouTube URL; transcript is fetched, chunked, and embedded |
+| POST | `/add` | Submit a YouTube URL; transcript is fetched automatically via `youtubei.js`, chunked, and embedded. If automatic fetching fails, responds with `422` and `needsManualTranscript: true` so the client can prompt the user to paste the transcript directly (resubmit with `{ url, transcript }`) |
 
-All routes above (except register/login/verify) require authentication via the `authUser` middleware, and upload/ask/auth routes are protected by dedicated rate limiters.
+All routes above (except register/login/verify-email) require authentication via the `authUser` middleware, and upload/ask/auth routes are protected by dedicated rate limiters.
 
 ---
 
@@ -307,21 +337,24 @@ All routes above (except register/login/verify) require authentication via the `
 - [x] Streaming AI responses (SSE + Socket.io)
 - [x] YouTube video Q&A
 - [x] Redis caching layer
+- [x] Manual transcript fallback for blocked YouTube fetches
+
 
 ---
 
 - **🎥 Live Demo**
 
 - **📄 PDF RAG**
-  
+
 https://github.com/user-attachments/assets/979e1fd5-a1f9-40b5-ba13-ddb96ad632cc
 
 -**▶️ YouTube RAG**
-----## ⚠️ Known Limitations
 
-- YouTube transcript extraction relies on publicly accessible transcripts.
-- Due to YouTube platform restrictions and anti-bot protections, transcript retrieval may fail for some videos in deployed environments.
-- PDF RAG and Web Search features are fully supported.
+## ⚠️ Known Limitations
+
+- YouTube transcript extraction relies on YouTube's internal/public transcript APIs (via `youtubei.js`). Due to YouTube's platform restrictions and anti-bot protections, automatic transcript retrieval may fail for some or all videos in cloud-hosted deployments (a known limitation shared by all scraping-based transcript libraries, not specific to this project).
+- When automatic fetching fails, the app does **not** simply error out — it prompts the user to paste the video's transcript manually (copyable from YouTube's own "Show transcript" panel), and proceeds with embedding and Q&A exactly as if it had been fetched automatically.
+- PDF RAG and Web Search features are fully supported with no such restrictions.
 
 https://github.com/user-attachments/assets/ac93df8a-cc69-4ca7-b27a-8447bac11620
 
@@ -337,11 +370,6 @@ https://github.com/user-attachments/assets/36f8b2a6-dbcc-4163-96e8-070ccd9298a0
 
 https://github.com/user-attachments/assets/0ebdfcb2-8475-4219-b137-94b7c6b05e1b
 
-
-
-
-
-
 ---
 ## 📄 License
 
@@ -354,9 +382,11 @@ This project is licensed under the MIT License.
 - LinkedIn: [hariom-mishra](https://www.linkedin.com/in/hariom-mishra-b0880b255/)
 - AskQuery : [Live Website](https://ask-query-genai.vercel.app/login)
 
-> **Note:** Using Brevo email api instead oauth2 due to render restriction.
+> **Note:** Using Brevo's email API instead of Gmail OAuth2, due to inconsistent outbound SMTP connectivity on Render.
 
 
 ## ⭐ Support
 
 If you found this project useful, please consider giving it a ⭐ on GitHub — it helps others discover it and supports future development.
+
+
