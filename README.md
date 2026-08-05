@@ -381,7 +381,7 @@ This project is licensed under the MIT License.
 - GitHub: [@hari5827](https://github.com/hari5827)
 - LinkedIn: [hariom-mishra](https://www.linkedin.com/in/hariom-mishra-b0880b255/)
 - AskQuery : [Live Website](https://ask-query-genai.vercel.app/login)
--Portfolio : [Hariom Mishra](https://hariom-mishra.vervel.app)
+- Portfolio : [Hariom Mishra(https://hariom-mishra.vercel.app/)
 > **Note:** Using Brevo's email API instead of Gmail OAuth2, due to inconsistent outbound SMTP connectivity on Render.
 
 
