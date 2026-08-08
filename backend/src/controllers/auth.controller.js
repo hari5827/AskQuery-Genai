@@ -22,7 +22,7 @@ export async function register(req,res){
 
       const emailVerificationToken = jwt.sign({
         email: user.email,
-    }, process.env.JWT_SECRET)
+    }, process.env.JWT_SECRET, { expiresIn: "24h" })
 
      await sendEmail({
         to: email,
@@ -90,7 +90,7 @@ export async function verifyEmail(req, res) {
             `
         <h1>Email Verified Successfully!</h1>
         <p>Your email has been verified. You can now log in to your account.</p>
-        <a href="http://localhost:3000/login">Go to Login</a>
+        <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/login">Go to Login</a>
     `
 
         return res.send(html);
@@ -189,10 +189,12 @@ export async function getMe(req, res) {
 
 
 export async function logout(req, res) {
+    const isProd = process.env.NODE_ENV === "production";
+
     res.clearCookie("token", {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
     });
 
     return res.status(200).json({
@@ -227,10 +229,12 @@ export async function deleteAccount(req, res) {
 
         await userModel.findByIdAndDelete(user._id);
 
+        const isProd = process.env.NODE_ENV === "production";
+
         res.clearCookie("token", {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
+            secure: isProd,
+            sameSite: isProd ? "none" : "lax",
         });
 
         return res.status(200).json({
