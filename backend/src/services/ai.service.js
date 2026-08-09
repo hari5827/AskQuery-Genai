@@ -21,11 +21,12 @@ const mistralmodel = new ChatMistralAI({
 });
 
 const coheremodel = new ChatCohere({
-  model: "command-r-plus",
+  model: "command-a-03-2025",
   apiKey: process.env.COHERE_API_KEY
 });
 
-
+// The only models a user can pick for chat responses. Mistral stays
+// out of this list on purpose — it's reserved for title generation.
 const SELECTABLE_MODELS = {
   gemini: geminimodel,
   cohere: coheremodel,
@@ -46,6 +47,8 @@ const searchInternetTool = tool(
   }
 );
 
+// Pulls the raw Tavily results out of the agent's message trail and
+// turns them into a clean, de-duplicated { title, url } list.
 function extractSources(agentMessages) {
   const sources = [];
   const seenUrls = new Set();
