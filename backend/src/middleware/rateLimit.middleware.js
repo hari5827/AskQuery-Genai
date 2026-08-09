@@ -24,7 +24,7 @@ export const uploadLimiter = rateLimit({
 
 export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 7,
+  max: 4,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -36,7 +36,7 @@ export const loginLimiter = rateLimit({
 
 export const registerLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: 3,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

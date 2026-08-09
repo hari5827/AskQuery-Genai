@@ -135,7 +135,7 @@ export async function register(req,res){
 
       const emailVerificationToken = jwt.sign({
         email: user.email,
-    }, process.env.JWT_SECRET, { expiresIn: "24h" })
+    }, process.env.JWT_SECRET, { expiresIn: "10m" })
 
      await sendEmail({
         to: email,
