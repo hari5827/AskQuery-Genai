@@ -2,6 +2,119 @@ import userModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../services/mail.service.js";
 
+function verificationPage({ status, heading, message, showLoginButton = true }) {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+
+    const icon = {
+        success: `
+            <div class="icon-circle icon-success">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>`,
+        info: `
+            <div class="icon-circle icon-info">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+            </div>`,
+        error: `
+            <div class="icon-circle icon-error">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </div>`,
+    }[status];
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AskQuery — Email Verification</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #050505;
+        background-image: radial-gradient(circle at top, #141414 0%, #090909 45%, #050505 100%);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: #ffffff;
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+    .glow-a {
+        position: fixed; top: -160px; left: -80px; width: 384px; height: 384px;
+        border-radius: 9999px; background: rgba(185, 28, 28, 0.05); filter: blur(160px);
+    }
+    .glow-b {
+        position: fixed; bottom: 0; right: 0; width: 448px; height: 448px;
+        border-radius: 9999px; background: rgba(185, 28, 28, 0.05); filter: blur(180px);
+    }
+    .card {
+        position: relative;
+        z-index: 10;
+        width: 100%;
+        max-width: 420px;
+        background: #111111;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: 40px 28px;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    }
+    .icon-circle {
+        width: 56px; height: 56px; margin: 0 auto 20px;
+        border-radius: 9999px;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .icon-circle svg { width: 28px; height: 28px; }
+    .icon-success { background: rgba(16, 185, 129, 0.1); color: #34d399; }
+    .icon-info { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
+    .icon-error { background: rgba(220, 38, 38, 0.1); color: #f87171; }
+    h1 {
+        font-size: 20px; font-weight: 700; letter-spacing: -0.01em;
+        margin: 0 0 10px;
+    }
+    p {
+        font-size: 14px; line-height: 1.6; color: #a1a1aa;
+        margin: 0 0 28px;
+    }
+    .btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 100%;
+        padding: 13px 24px;
+        border-radius: 16px;
+        background: linear-gradient(to right, #b91c1c, #dc2626);
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        transition: opacity 0.2s ease;
+    }
+    .btn:hover { opacity: 0.9; }
+    .brand {
+        margin-top: 28px;
+        font-size: 12px;
+        color: #52525b;
+        letter-spacing: 0.02em;
+    }
+</style>
+</head>
+<body>
+    <div class="glow-a"></div>
+    <div class="glow-b"></div>
+    <div class="card">
+        ${icon}
+        <h1>${heading}</h1>
+        <p>${message}</p>
+        ${showLoginButton ? `<a class="btn" href="${frontendUrl}/login">Go to Login</a>` : ""}
+        <div class="brand">AskQuery</div>
+    </div>
+</body>
+</html>`;
+}
+
 export async function register(req,res){
     const { username,email,password}=req.body;
     
@@ -63,21 +176,21 @@ export async function verifyEmail(req, res) {
         const user = await userModel.findOne({ email: decoded.email });
 
         if (!user) {
-            return res.status(400).json({
-                message: "Invalid token",
-                success: false,
-                err: "User not found"
-            })
+            return res.status(400).send(verificationPage({
+                status: "error",
+                heading: "Verification Failed",
+                message: "We couldn't find an account for this link. Please try registering again.",
+            }));
         }
 
 
        if (user.verified) {
 
-       const html = `
-        <h1>Email Already Verified ✅</h1>
-        <p>Your email is already verified.</p>
-       <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/login">Go to Login</a>
-    `;
+       const html = verificationPage({
+        status: "info",
+        heading: "Already Verified",
+        message: "Your email is already verified — you're all set to log in.",
+    });
 
     return res.send(html);
      }
@@ -86,20 +199,19 @@ export async function verifyEmail(req, res) {
 
         await user.save();
 
-        const html =
-            `
-        <h1>Email Verified Successfully!</h1>
-        <p>Your email has been verified. You can now log in to your account.</p>
-        <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/login">Go to Login</a>
-    `
+        const html = verificationPage({
+            status: "success",
+            heading: "Email Verified!",
+            message: "Your email has been verified successfully. You can now log in to your account.",
+        });
 
         return res.send(html);
     } catch (err) {
-        return res.status(400).json({
-            message: "Invalid or expired token",
-            success: false,
-            err: err.message
-        })
+        return res.status(400).send(verificationPage({
+            status: "error",
+            heading: "Verification Failed",
+            message: "This link is invalid or has expired. Please try registering again or request a new verification link.",
+        }));
     }
 }
 

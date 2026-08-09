@@ -13,10 +13,12 @@ const Register = () => {
     const [showTransition, setShowTransition] = useState(false);
     const { handleRegister } = useAuth();
     const error = useSelector((state) => state.auth.error);
+    const loading = useSelector((state) => state.auth.loading);
 
     const navigate = useNavigate();
    const handleSubmit = async (e) => {
   e.preventDefault();
+  if (loading) return;
   const success = await handleRegister({ email, username, password });
   if (success) {
     setShowTransition(true);
@@ -103,9 +105,25 @@ const Register = () => {
                 <div className="pt-2">
                     <button
                         type="submit"
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-700 to-red-600 px-6 py-3 font-semibold text-white shadow-md transition hover:from-red-600 hover:to-red-500"
+                        disabled={loading}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-700 to-red-600 px-6 py-3 font-semibold text-white shadow-md transition hover:from-red-600 hover:to-red-500 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
                     >
-                        Create account
+                        {loading ? (
+                            <>
+                                <svg
+                                    className="h-5 w-5 animate-spin"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                                Creating account...
+                            </>
+                        ) : (
+                            "Create account"
+                        )}
                     </button>
                 </div>
                 <div className="mt-4 text-center text-sm text-zinc-500">
