@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { store } from './app/app.store'
 import { Provider } from 'react-redux'
+import { Analytics } from '@vercel/analytics/react';
 
 import './app/index.css'
 import App from './app/App.jsx'
@@ -11,6 +12,7 @@ function mountApp() {
     <StrictMode >
       <Provider store={store}>
         <App />
+        <Analytics />
      </Provider>
     </StrictMode>,
   )
