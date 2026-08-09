@@ -15,6 +15,7 @@
 ![LangChain](https://img.shields.io/badge/LangChain-1C3C3C?style=for-the-badge&logo=chainlink&logoColor=white)
 ![Pinecone](https://img.shields.io/badge/Pinecone-000000?style=for-the-badge)
 ![Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)
+![Cohere](https://img.shields.io/badge/Cohere-39594D?style=for-the-badge&logo=cohere&logoColor=white)
 ![Mistral](https://img.shields.io/badge/Mistral_AI-EA5A0C?style=for-the-badge)
 ![Brevo](https://img.shields.io/badge/Brevo-Email%20API-0B996E?style=for-the-badge&logo=brevo&logoColor=white)
 ![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)
@@ -30,9 +31,10 @@ AskQuery is a full-stack, production-style RAG (Retrieval-Augmented Generation) 
 - Upload a **PDF** and ask questions about its content
 - Paste a **YouTube link** and ask questions about the video (via its transcript)
 - Toggle **live internet search** to get answers grounded in current web results
+- **Choose which LLM answers their chat** — Gemini or Cohere — right from the message input
 - Chat in real time, with **token-by-token streaming responses**
 
-Under the hood, the app chunks and embeds source content, stores the vectors in **Pinecone**, retrieves the most relevant chunks for a given question, and hands them to an LLM (**Gemini** or **Mistral**) — orchestrated with **LangChain** — to produce a grounded, cited answer. A LangChain **agent with a web-search tool** (Tavily) is used when internet mode is enabled, and **Redis** caches repeated searches/answers to cut latency and API cost.
+Under the hood, the app chunks and embeds source content, stores the vectors in **Pinecone**, retrieves the most relevant chunks for a given question, and hands them to an LLM — orchestrated with **LangChain** — to produce a grounded, cited answer. Regular chat and web-search chat run on whichever model the user picks (**Gemini** or **Cohere**); **Mistral** is used behind the scenes for PDF Q&A and chat-title generation and isn't part of the user-facing model picker. A LangChain **agent with a web-search tool** (Tavily) is used when internet mode is enabled, and **Redis** caches repeated searches/answers to cut latency and API cost.
 
 ---
 
@@ -43,6 +45,7 @@ Under the hood, the app chunks and embeds source content, stores the vectors in 
 - 📄 **PDF upload & RAG chat** — parse, chunk, embed, and semantically search PDF content
 - ▶️ **YouTube Q&A** — ask questions about videos via their transcript (fetched automatically using `youtubei.js`). On cloud deployments, YouTube's anti-bot protections can occasionally block automatic fetching — when that happens, the app falls back to a **manual transcript paste** flow instead of failing outright, so the feature stays usable regardless of environment
 - 🌐 **Live internet search mode** — a LangChain agent calls a Tavily search tool for up-to-date, non-document questions
+- 🤖 **Model selector** — switch between **Gemini** and **Cohere** for chat responses (web-search chat included) directly from the message input
 - ⚡ **Streaming responses** — answers stream back token-by-token over Server-Sent Events / Socket.io instead of waiting for the full response
 - 🧵 **Persistent chat history** — every conversation and message is saved per user in MongoDB, with auto-generated chat titles
 - 🚀 **Redis caching** — caches web-search results and repeated queries to reduce latency and third-party API usage
@@ -85,7 +88,7 @@ Under the hood, the app chunks and embeds source content, stores the vectors in 
 | Category | Tech |
 |---|---|
 | Orchestration | LangChain (`langchain`, `@langchain/core`) |
-| LLMs | Google Gemini (`@langchain/google-genai`), Mistral AI (`@langchain/mistralai`) |
+| LLMs | Google Gemini (`@langchain/google-genai`), Cohere (`@langchain/cohere`) — both user-selectable for chat; Mistral AI (`@langchain/mistralai`) — used internally for PDF Q&A and chat-title generation only |
 | Embeddings | Mistral Embeddings (`mistral-embed`) |
 | Vector database | Pinecone |
 | Agent tools | Custom `searchInternet` tool backed by Tavily Search API |
@@ -106,7 +109,7 @@ flowchart LR
     B --> D[(MongoDB)]
     B --> R[(Redis Cache)]
     B --> E[LangChain Layer]
-    E --> F[Gemini / Mistral LLM]
+    E --> F[Gemini / Cohere / Mistral LLM]
     E --> G[(Pinecone Vector DB)]
     E --> H[Tavily Web Search]
     B --> I[PDF Parser]
@@ -128,11 +131,13 @@ flowchart TD
     D --> E[Build Context + Prompt]
     E --> F{Web Search Enabled?}
     F -->|Yes| G[LangChain Agent + Tavily Tool]
-    F -->|No| H[Direct LLM Call - Gemini / Mistral]
+    F -->|No| H[Direct LLM Call - User-selected Gemini or Cohere]
     G --> I[Stream Answer to Client]
     H --> I
     I --> J[Persist Chat + Message in MongoDB]
 ```
+
+> Note: the diagram above covers regular chat. PDF Q&A always uses **Mistral**, regardless of the chat model selector.
 
 ## 📄 Document / Video Ingestion Flow
 
@@ -206,7 +211,7 @@ AskQuery-Genai/
 - Node.js (v18+ recommended)
 - MongoDB instance (local or Atlas)
 - Redis instance (local or hosted, e.g. Upstash/Redis Cloud)
-- API keys for: Google Gemini, Mistral AI, Pinecone, Tavily, Brevo
+- API keys for: Google Gemini, Cohere, Mistral AI, Pinecone, Tavily, Brevo
 
 ### 1. Clone the repository
 ```bash
@@ -261,6 +266,7 @@ BACKEND_URL=http://localhost:3000
 
 # AI / Vector / Search providers
 ASKQUERY_API_KEY=       # Google Gemini API key
+COHERE_API_KEY=
 MISTRAL_API_KEY=
 PINECONE_API_KEY=
 TAVILY_API_KEY=
@@ -308,8 +314,8 @@ VITE_API_URL=http://localhost:3000
 ### Chat — `/api/chats`
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/message` | Send a message, get a full response |
-| POST | `/message/stream` | Send a message, get a streamed (SSE) response |
+| POST | `/message` | Send a message, get a full response. Body accepts `{ message, chat, webSearch, model }` — `model` is `"gemini"` (default) or `"cohere"` |
+| POST | `/message/stream` | Send a message, get a streamed (SSE) response. Same body as `/message` |
 | GET | `/` | List all chats for the current user |
 | GET | `/:chatId/messages` | Get all messages in a chat |
 | DELETE | `/delete/:chatId` | Delete a chat |
@@ -338,6 +344,7 @@ All routes above (except register/login/verify-email) require authentication via
 - [x] YouTube video Q&A
 - [x] Redis caching layer
 - [x] Manual transcript fallback for blocked YouTube fetches
+- [x] User-selectable chat model (Gemini / Cohere)
 
 
 ---
@@ -355,6 +362,7 @@ https://github.com/user-attachments/assets/979e1fd5-a1f9-40b5-ba13-ddb96ad632cc
 - YouTube transcript extraction relies on YouTube's internal/public transcript APIs (via `youtubei.js`). Due to YouTube's platform restrictions and anti-bot protections, automatic transcript retrieval may fail for some or all videos in cloud-hosted deployments (a known limitation shared by all scraping-based transcript libraries, not specific to this project).
 - When automatic fetching fails, the app does **not** simply error out — it prompts the user to paste the video's transcript manually (copyable from YouTube's own "Show transcript" panel), and proceeds with embedding and Q&A exactly as if it had been fetched automatically.
 - PDF RAG and Web Search features are fully supported with no such restrictions.
+- Cohere periodically retires older `command-*` model IDs (e.g. `command-r-plus` was shut down September 2025). If Cohere chat responses start failing with a `404 model ... was removed` error, check [Cohere's deprecation page](https://docs.cohere.com/docs/deprecations) and update the model name in `backend/src/services/ai.service.js`.
 
 https://github.com/user-attachments/assets/ac93df8a-cc69-4ca7-b27a-8447bac11620
 
@@ -388,5 +396,4 @@ This project is licensed under the MIT License.
 ## ⭐ Support
 
 If you found this project useful, please consider giving it a ⭐ on GitHub — it helps others discover it and supports future development.
-
 
