@@ -23,6 +23,7 @@ const Dashboard = () => {
 
   const [chatInput, setChatInput] = useState("");
   const [webSearchOn, setWebSearchOn] = useState(false);
+  const [modelChoice, setModelChoice] = useState("gemini");
   const [pendingFirstMessage, setPendingFirstMessage] = useState(null);
   const [youtubeMode, setYoutubeMode] = useState(false);
 
@@ -122,6 +123,7 @@ const Dashboard = () => {
       message: trimmedMessage,
       chatId: currentChatId,
       webSearch: webSearchOn,
+      model: modelChoice,
     });
 
     setPendingFirstMessage(null);
@@ -181,6 +183,8 @@ const Dashboard = () => {
             setChatInput={setChatInput}
             webSearchOn={webSearchOn}
             setWebSearchOn={setWebSearchOn}
+            modelChoice={modelChoice}
+            setModelChoice={setModelChoice}
             onSubmit={handleSubmitMessage}
             isLoading={isLoading}
             selectedDocument={selectedDocument}

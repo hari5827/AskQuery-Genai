@@ -4,7 +4,7 @@ import messageModel from "../models/message.model.js";
 
 export async function sendMessage(req, res) {
     
-    const { message, chat: chatId, webSearch } = req.body;
+    const { message, chat: chatId, webSearch, model } = req.body;
      
        let title = null, chat = null;
 
@@ -24,7 +24,7 @@ export async function sendMessage(req, res) {
     })
 
         const messages = await messageModel.find({ chat: chatId || chat._id })
-           const { text, sources } = await generateResponse(messages, webSearch, req.user.id);
+           const { text, sources } = await generateResponse(messages, webSearch, req.user.id, model);
 
      const aiMessage = await messageModel.create({
         chat: chatId || chat._id,
@@ -47,7 +47,7 @@ export async function sendMessage(req, res) {
 // records (chat/title if new, user message, final AI message) but pushes
 // the AI's answer to the client token-by-token instead of all at once.
 export async function sendMessageStream(req, res) {
-  const { message, chat: chatId, webSearch } = req.body;
+  const { message, chat: chatId, webSearch, model } = req.body;
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -87,7 +87,8 @@ export async function sendMessageStream(req, res) {
       messages,
       webSearch,
       req.user.id,
-      (token) => sendEvent({ type: "chunk", content: token })
+      (token) => sendEvent({ type: "chunk", content: token }),
+      model
     );
 
     const aiMessage = await messageModel.create({

@@ -8,7 +8,7 @@ export const useChat = () => {
 
     const dispatch = useDispatch()
 
-  async function handleSendMessage({ message, chatId, webSearch }) {
+  async function handleSendMessage({ message, chatId, webSearch, model }) {
     dispatch(setLoading(true))
 
     // Show the user's message immediately for an existing chat
@@ -21,7 +21,7 @@ export const useChat = () => {
     }
 
     try {
-        const data = await sendMessage({ message, chatId, webSearch })
+        const data = await sendMessage({ message, chatId, webSearch, model })
         const { chat, aiMessage } = data
 
         if (!chatId) {
@@ -54,7 +54,7 @@ export const useChat = () => {
     // Streaming counterpart to handleSendMessage. Reads the SSE response
     // body as it arrives instead of waiting for the full JSON reply, so
     // the AI bubble fills in progressively.
-    async function handleSendMessageStream({ message, chatId, webSearch }) {
+    async function handleSendMessageStream({ message, chatId, webSearch, model }) {
         dispatch(setLoading(true))
 
         if (chatId) {
@@ -69,7 +69,7 @@ export const useChat = () => {
         let aiMessageStarted = false
 
         try {
-            const response = await streamMessage({ message, chatId, webSearch })
+            const response = await streamMessage({ message, chatId, webSearch, model })
             const reader = response.body.getReader()
             const decoder = new TextDecoder()
 

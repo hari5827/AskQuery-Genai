@@ -1,13 +1,76 @@
-import React from "react";
-import { Globe, Send, SquarePlay, X } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Globe, Send, SquarePlay, X, ChevronDown, Sparkles } from "lucide-react";
 import UploadDocumentButton from "../../pdf/components/UploadDocumentButton";
 import SelectedDocumentChip from "../../pdf/components/SelectedDocumentChip";
+
+const MODEL_OPTIONS = [
+  { id: "gemini", label: "Gemini" },
+  { id: "cohere", label: "Cohere" },
+];
+
+function ModelSelector({ modelChoice, setModelChoice, disabled }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const activeLabel = MODEL_OPTIONS.find((m) => m.id === modelChoice)?.label || "Gemini";
+
+  return (
+    <div className="relative shrink-0" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        disabled={disabled}
+        title="Choose model"
+        className="flex items-center gap-1 rounded-full px-2 py-2 text-zinc-400 transition hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5 sm:py-2.5"
+      >
+        <Sparkles size={18} className="sm:hidden" />
+        <Sparkles size={16} className="hidden sm:block" />
+        <span className="hidden text-xs font-medium sm:inline">{activeLabel}</span>
+        <ChevronDown size={14} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute bottom-full left-0 mb-2 w-36 overflow-hidden rounded-2xl border border-white/10 bg-[#111111] py-1 shadow-lg">
+          {MODEL_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => {
+                setModelChoice(option.id);
+                setOpen(false);
+              }}
+              className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition ${
+                modelChoice === option.id
+                  ? "bg-red-500/15 text-red-400"
+                  : "text-zinc-300 hover:bg-white/5 hover:text-white"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function ChatInput({
   chatInput,
   setChatInput,
   webSearchOn,
   setWebSearchOn,
+  modelChoice,
+  setModelChoice,
   onSubmit,
   isLoading,
   selectedDocument,
@@ -87,6 +150,12 @@ export function ChatInput({
           <Globe size={18} className="sm:hidden" />
           <Globe size={20} className="hidden sm:block" />
         </button>
+
+        <ModelSelector
+          modelChoice={modelChoice}
+          setModelChoice={setModelChoice}
+          disabled={youtubeMode || pendingManualTranscriptUrl || isLoading}
+        />
 
         <UploadDocumentButton
           onFileSelected={onFileSelected}

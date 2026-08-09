@@ -1,5 +1,6 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatMistralAI } from "@langchain/mistralai";
+import { ChatCohere } from "@langchain/cohere";
 import { HumanMessage, SystemMessage, AIMessage } from "@langchain/core/messages";
 import { tool } from "@langchain/core/tools";
 import { createAgent } from "langchain";
@@ -13,10 +14,26 @@ const geminimodel = new ChatGoogleGenerativeAI({
   apiKey: process.env.ASKQUERY_API_KEY
 });
 
+// Used only for chat title generation — not user-selectable in the chat UI.
 const mistralmodel = new ChatMistralAI({
   model: "mistral-small-latest",
   apikey: process.env.MISTRAL_API_KEY
 });
+
+const coheremodel = new ChatCohere({
+  model: "command-r-plus",
+  apiKey: process.env.COHERE_API_KEY
+});
+
+
+const SELECTABLE_MODELS = {
+  gemini: geminimodel,
+  cohere: coheremodel,
+};
+
+function resolveModel(modelChoice) {
+  return SELECTABLE_MODELS[modelChoice] || geminimodel;
+}
 
 const searchInternetTool = tool(
   searchInternet,
@@ -29,8 +46,6 @@ const searchInternetTool = tool(
   }
 );
 
-// Pulls the raw Tavily results out of the agent's message trail and
-// turns them into a clean, de-duplicated { title, url } list.
 function extractSources(agentMessages) {
   const sources = [];
   const seenUrls = new Set();
@@ -129,18 +144,19 @@ function buildToolsAndMessages(messages, webSearchEnabled, userId) {
   return { tools, baseMessages };
 }
 
-export async function generateResponse(messages, webSearchEnabled = false, userId = null) {
+export async function generateResponse(messages, webSearchEnabled = false, userId = null, modelChoice = "gemini") {
   console.log(messages);
 
   const { tools, baseMessages } = buildToolsAndMessages(messages, webSearchEnabled, userId);
+  const model = resolveModel(modelChoice);
 
   if (tools.length === 0) {
-    const response = await mistralmodel.invoke(baseMessages);
+    const response = await model.invoke(baseMessages);
     return { text: response.text, sources: [] };
   }
 
   const agent = createAgent({
-    model: mistralmodel,
+    model,
     tools,
   });
 
@@ -154,14 +170,15 @@ export async function generateResponse(messages, webSearchEnabled = false, userI
 // Same logic as generateResponse, but calls onToken(chunk) as text arrives
 // instead of waiting for the whole answer. Used by the SSE endpoint so the
 // UI can render the reply progressively instead of one big blob at the end.
-export async function streamResponse(messages, webSearchEnabled = false, userId = null, onToken = () => {}) {
+export async function streamResponse(messages, webSearchEnabled = false, userId = null, onToken = () => {}, modelChoice = "gemini") {
   const { tools, baseMessages } = buildToolsAndMessages(messages, webSearchEnabled, userId);
+  const model = resolveModel(modelChoice);
 
   let fullText = "";
 
   // No tools needed: stream tokens straight from the chat model.
   if (tools.length === 0) {
-    const stream = await mistralmodel.stream(baseMessages);
+    const stream = await model.stream(baseMessages);
     for await (const chunk of stream) {
       const token = chunk?.content;
       if (typeof token === "string" && token.length > 0) {
@@ -178,7 +195,7 @@ export async function streamResponse(messages, webSearchEnabled = false, userId 
   // pairs for every step in the underlying graph, so we grab completed
   // ToolMessage chunks for source extraction and stream everything else
   // that carries text content.
-  const agent = createAgent({ model: mistralmodel, tools });
+  const agent = createAgent({ model, tools });
 
   const stream = await agent.stream(
     { messages: baseMessages },
