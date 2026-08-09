@@ -22,6 +22,8 @@ export function ChatMessages({
   user,
   logo,
   webSearchOn,
+  error,
+  onDismissError,
 }) {
   const currentChat = currentChatId ? chats[currentChatId] : null;
   const scrollRef = useRef(null);
@@ -46,6 +48,19 @@ export function ChatMessages({
   return (
     <div ref={scrollRef} className="min-w-0 flex-1 overflow-y-auto">
       <div className="mx-auto flex w-full max-w-5xl flex-col space-y-5 px-4 py-8 sm:space-y-7 sm:px-8 sm:py-10">
+        {error && (
+          <div className="flex items-start justify-between gap-2 rounded-xl border border-red-700/30 bg-red-700/10 px-4 py-3 text-sm text-red-300">
+            <span>{error}</span>
+            <button
+              type="button"
+              onClick={onDismissError}
+              className="shrink-0 text-red-400 hover:text-red-200"
+              aria-label="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        )}
         {currentChatId ? (
           <>
             {currentChat?.messages?.map((message, index) => (

@@ -102,7 +102,10 @@ export async function sendMessageStream(req, res) {
     res.end();
   } catch (error) {
     console.error("Streaming error:", error);
-    sendEvent({ type: "error", message: "Something went wrong while generating the response." });
+    sendEvent({
+      type: "error",
+      message: error?.message || "Something went wrong while generating the response.",
+    });
     res.end();
   }
 }

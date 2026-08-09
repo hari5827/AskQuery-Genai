@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useChat } from "../hook/useChat";
 import { useAuth } from "../../auth/hook/useAuth";
 import { usePdf } from "../../pdf/hook/usePdf";
+import { setError } from "../chat.slice";
 import logo from "../../../app/askquery-logo.svg";
 import "katex/dist/katex.min.css";
 
@@ -17,6 +18,7 @@ import LogoutToast from "../components/models/LogoutToast";
 import DeleteDocumentModal from "../../pdf/components/models/DeleteDocumentModal";
 
 const Dashboard = () => {
+  const dispatch = useDispatch();
   const chat = useChat();
   const pdf = usePdf();
   const { handleLogout, handleDeleteAccount } = useAuth();
@@ -31,6 +33,7 @@ const Dashboard = () => {
   const currentChatId = useSelector((state) => state.chat.currentChatId);
   const user = useSelector((state) => state.auth.user);
   const isLoading = useSelector((state) => state.chat.isLoading);
+  const chatError = useSelector((state) => state.chat.error);
 
   const documents = useSelector((state) => state.pdf.documents);
   const selectedDocumentId = useSelector((state) => state.pdf.selectedDocumentId);
@@ -83,6 +86,7 @@ const Dashboard = () => {
     const trimmedMessage = chatInput.trim();
     if (!trimmedMessage) return;
 
+    dispatch(setError(null));
     setChatInput("");
 
     if (pendingManualTranscriptUrl) {
@@ -176,6 +180,8 @@ const Dashboard = () => {
             user={user}
             logo={logo}
             webSearchOn={webSearchOn}
+            error={chatError}
+            onDismissError={() => dispatch(setError(null))}
           />
 
           <ChatInput
