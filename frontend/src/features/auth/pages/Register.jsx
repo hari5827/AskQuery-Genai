@@ -5,6 +5,7 @@ import LoginTransition from "../components/LoginTransition";
 import { useAuth } from "../hook/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { useLoadingStages } from "../hook/useLoadingStages";
 const Register = () => {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
@@ -16,6 +17,10 @@ const Register = () => {
     const loading = useSelector((state) => state.auth.loading);
 
     const navigate = useNavigate();
+    const { message: loadingMessage, progress } = useLoadingStages(loading, {
+        baseMessage: "Create account",
+        startMessage: "Creating account...",
+    })
    const handleSubmit = async (e) => {
   e.preventDefault();
   if (loading) return;
@@ -106,10 +111,17 @@ const Register = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-700 to-red-600 px-6 py-3 font-semibold text-white shadow-md transition hover:from-red-600 hover:to-red-500 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
+                        className="relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-red-700 to-red-600 px-6 py-3 font-semibold text-white shadow-md transition hover:from-red-600 hover:to-red-500 active:scale-[0.98] disabled:opacity-90 disabled:cursor-not-allowed disabled:active:scale-100"
                     >
-                        {loading ? (
-                            <>
+                        {loading && (
+                            <span
+                                className="absolute inset-y-0 left-0 bg-white/20 transition-[width] duration-700 ease-out"
+                                style={{ width: `${progress}%` }}
+                                aria-hidden="true"
+                            />
+                        )}
+                        <span className="relative flex items-center gap-2">
+                            {loading && (
                                 <svg
                                     className="h-5 w-5 animate-spin"
                                     xmlns="http://www.w3.org/2000/svg"
@@ -119,12 +131,15 @@ const Register = () => {
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                 </svg>
-                                Creating account...
-                            </>
-                        ) : (
-                            "Create account"
-                        )}
+                            )}
+                            {loadingMessage}
+                        </span>
                     </button>
+                    {loading && (
+                        <p className="mt-2 text-center text-xs text-zinc-500">
+                            First request after a while can take up to a minute — server is spinning up.
+                        </p>
+                    )}
                 </div>
                 <div className="mt-4 text-center text-sm text-zinc-500">
                     <span>Already have an account? </span>
