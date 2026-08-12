@@ -262,6 +262,7 @@ export async function generateChatTitle(message) {
 
       User will provide you with the first message of a chat conversation, and you will generate a title that captures the essence of the conversation in 2-4 words.
       The title should be clear, relevant, and engaging, giving users a quick understanding of the chat's topic.
+      Respond with the title text only — no surrounding quotation marks, no punctuation wrapping it, and no extra commentary.
     `),
     new HumanMessage(`
       Generate a title for a chat conversation based on the following first message:
@@ -269,5 +270,6 @@ export async function generateChatTitle(message) {
     `)
   ]);
 
-  return response.text;
+  // Defensive strip in case the model still wraps the title in quotes.
+  return response.text.trim().replace(/^["'“”‘’]+|["'“”‘’]+$/g, "");
 }
