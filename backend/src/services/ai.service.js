@@ -209,6 +209,14 @@ export async function streamResponse(messages, webSearchEnabled = false, userId 
   const toolMessages = [];
 
   for await (const [chunk] of stream) {
+    console.log(
+      "DEBUG chunk —",
+      "type:", typeof chunk?._getType === "function" ? chunk._getType() : chunk?.constructor?.name,
+      "| content:", JSON.stringify(chunk?.content),
+      "| tool_calls:", JSON.stringify(chunk?.tool_calls),
+      "| additional_kwargs:", JSON.stringify(chunk?.additional_kwargs)
+    );
+
     if (typeof chunk?._getType === "function" && chunk._getType() === "tool") {
       toolMessages.push(chunk);
       continue;
