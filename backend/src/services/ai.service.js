@@ -224,6 +224,8 @@ export async function streamResponse(messages, webSearchEnabled = false, userId 
   const sources = extractSources(toolMessages);
 
   if (!fullText) {
+    console.log("DEBUG empty response — modelChoice:", modelChoice);
+    console.log("DEBUG toolMessages:", JSON.stringify(toolMessages, null, 2));
     fullText = "I wasn't able to generate a response for that. Please try rephrasing your question.";
     onToken(fullText);
   }
