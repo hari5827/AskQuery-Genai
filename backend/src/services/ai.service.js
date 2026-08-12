@@ -164,7 +164,8 @@ export async function generateResponse(messages, webSearchEnabled = false, userI
   });
 
   const response = await agent.invoke({ messages: baseMessages });
-  const text = response.messages[response.messages.length - 1].text;
+  const text = response.messages[response.messages.length - 1].text
+    || "I wasn't able to generate a response for that. Please try rephrasing your question.";
   const sources = extractSources(response.messages);
 
   return { text, sources };
@@ -221,6 +222,12 @@ export async function streamResponse(messages, webSearchEnabled = false, userId 
   }
 
   const sources = extractSources(toolMessages);
+
+  if (!fullText) {
+    fullText = "I wasn't able to generate a response for that. Please try rephrasing your question.";
+    onToken(fullText);
+  }
+
   return { text: fullText, sources };
 }
 
