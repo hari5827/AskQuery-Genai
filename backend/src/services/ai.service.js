@@ -195,12 +195,35 @@ export async function streamResponse(messages, webSearchEnabled = false, userId 
 
   // Tools may run first (web search / chat history lookup); once the
   // agent moves on to producing the final answer, those chunks stream
-  // out as they're generated. streamMode "messages" yields [chunk, metadata]
-  // pairs for every step in the underlying graph, so we grab completed
-  // ToolMessage chunks for source extraction and stream everything else
-  // that carries text content.
+  // out as they're generated.
   const agent = createAgent({ model, tools });
 
+  // @langchain/cohere doesn't populate the normalized `tool_calls` field
+  // on streamed chunks (Cohere's tool-call deltas stay in
+  // additional_kwargs.toolCalls and never get merged), so createAgent's
+  // graph thinks Cohere never called a tool and skips straight to a
+  // (blank) final answer. Non-streaming invoke() builds the AIMessage
+  // from the full API response instead of merging deltas, so tool_calls
+  // comes through correctly there. We simulate streaming afterward so
+  // the UI still gets a typing effect.
+  if (modelChoice === "cohere") {
+    const response = await agent.invoke({ messages: baseMessages });
+    const text = response.messages[response.messages.length - 1].text
+      || "I wasn't able to generate a response for that. Please try rephrasing your question.";
+    const sources = extractSources(response.messages);
+
+    for (const word of text.split(" ")) {
+      const token = word + " ";
+      fullText += token;
+      onToken(token);
+    }
+
+    return { text: fullText.trim(), sources };
+  }
+
+  // streamMode "messages" yields [chunk, metadata] pairs for every step
+  // in the underlying graph, so we grab completed ToolMessage chunks for
+  // source extraction and stream everything else that carries text content.
   const stream = await agent.stream(
     { messages: baseMessages },
     { streamMode: "messages" }
@@ -209,14 +232,6 @@ export async function streamResponse(messages, webSearchEnabled = false, userId 
   const toolMessages = [];
 
   for await (const [chunk] of stream) {
-    console.log(
-      "DEBUG chunk —",
-      "type:", typeof chunk?._getType === "function" ? chunk._getType() : chunk?.constructor?.name,
-      "| content:", JSON.stringify(chunk?.content),
-      "| tool_calls:", JSON.stringify(chunk?.tool_calls),
-      "| additional_kwargs:", JSON.stringify(chunk?.additional_kwargs)
-    );
-
     if (typeof chunk?._getType === "function" && chunk._getType() === "tool") {
       toolMessages.push(chunk);
       continue;
@@ -232,8 +247,6 @@ export async function streamResponse(messages, webSearchEnabled = false, userId 
   const sources = extractSources(toolMessages);
 
   if (!fullText) {
-    console.log("DEBUG empty response — modelChoice:", modelChoice);
-    console.log("DEBUG toolMessages:", JSON.stringify(toolMessages, null, 2));
     fullText = "I wasn't able to generate a response for that. Please try rephrasing your question.";
     onToken(fullText);
   }
