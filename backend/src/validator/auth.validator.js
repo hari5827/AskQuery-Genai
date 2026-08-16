@@ -39,3 +39,38 @@ export const loginValidator = [
 
     validate
 ];
+
+export const forgotPasswordValidator = [
+    body("email")
+        .trim()
+        .notEmpty().withMessage("Email is required")
+        .isEmail().withMessage("Please provide a valid email"),
+
+    validate
+];
+
+export const verifyResetOtpValidator = [
+    body("email")
+        .trim()
+        .notEmpty().withMessage("Email is required")
+        .isEmail().withMessage("Please provide a valid email"),
+
+    body("otp")
+        .trim()
+        .notEmpty().withMessage("Code is required")
+        .isLength({ min: 4, max: 4 }).withMessage("Code must be 4 digits")
+        .isNumeric().withMessage("Code must be numeric"),
+
+    validate
+];
+
+export const resetPasswordValidator = [
+    body("resetToken")
+        .notEmpty().withMessage("Reset session is missing, please start again"),
+
+    body("newPassword")
+        .notEmpty().withMessage("Password is required")
+        .isLength({ min: 6 }).withMessage("Password must be at least 6 characters"),
+
+    validate
+];
