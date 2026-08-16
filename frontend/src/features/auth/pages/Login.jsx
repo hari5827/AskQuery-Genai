@@ -12,6 +12,7 @@ const Login = () => {
     const [ password, setPassword ] = useState('')
     const [showPassword, setShowPassword] = useState(false)
     const [showTransition, setShowTransition] = useState(false)
+    const [failedAttempts, setFailedAttempts] = useState(0)
     const location = useLocation()
     const [infoMessage, setInfoMessage] = useState(location.state?.message || null)
     // handleLogin's own setLoading(false)/setUser() dispatches cause a
@@ -23,6 +24,7 @@ const Login = () => {
     const justSubmittedRef = useRef(false)
     const user = useSelector(state => state.auth.user)
     const loading = useSelector(state => state.auth.loading)
+    const error = useSelector(state => state.auth.error)
 
     const { handleLogin } = useAuth()
     const { message: loadingMessage, progress } = useLoadingStages(loading, {
@@ -48,9 +50,11 @@ const Login = () => {
         // handleLogin catches its own errors, so check the live store
         // state to know whether it actually succeeded before animating.
         if (store.getState().auth.user) {
+            setFailedAttempts(0)
             setShowTransition(true)
         } else {
             justSubmittedRef.current = false
+            setFailedAttempts((n) => n + 1)
         }
 
     }
@@ -79,6 +83,19 @@ const Login = () => {
                         </button>
                     </div>
                 )}
+                {error && (
+                    <div className="rounded-xl border border-red-700/30 bg-red-700/10 px-4 py-3 text-sm text-red-300">
+                        {error}
+                    </div>
+                )}
+                {failedAttempts >= 3 && (
+                    <div className="rounded-xl border border-amber-600/30 bg-amber-600/10 px-4 py-3 text-sm text-amber-200">
+                        Still not working?{" "}
+                        <Link to="/forgot-password" className="font-medium text-amber-100 underline hover:text-white">
+                            Reset your password here
+                        </Link>
+                    </div>
+                )}
                 <label className="block">
                     <span className="text-sm text-zinc-400">Email</span>
                     <input
@@ -92,7 +109,12 @@ const Login = () => {
                 </label>
 
                 <label className="block relative">
-                    <span className="text-sm text-zinc-400">Password</span>
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-zinc-400">Password</span>
+                        <Link to="/forgot-password" className="text-xs font-medium text-red-400 hover:text-red-300">
+                            Forgot password?
+                        </Link>
+                    </div>
                     <input
                         type={showPassword ? "text" : "password"}
                         value={password}
