@@ -17,9 +17,7 @@ const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
 
-    // TEMP DEBUG: print resolved versions of the packages involved in the
-    // Gemini tool-schema issue, since Shell access isn't available on the
-    // free plan. Safe to remove once the version mismatch is confirmed.
+  
     try {
         console.log("DEBUG VERSIONS —",
             "zod:", require("zod/package.json").version,
