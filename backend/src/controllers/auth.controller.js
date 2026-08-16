@@ -1,6 +1,14 @@
 import userModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../services/mail.service.js";
+import { generateOtp } from "../utils/otp.js";
+import {
+    storeOtp,
+    getOtpRecord,
+    incrementOtpAttempts,
+    clearOtp,
+    OTP_MAX_ATTEMPTS,
+} from "../services/passwordReset.service.js";
 
 function verificationPage({ status, heading, message, showLoginButton = true }) {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -360,6 +368,124 @@ export async function deleteAccount(req, res) {
             message: error.message,
         });
     }
+}
+
+export async function forgotPassword(req, res) {
+    const { email } = req.body;
+
+    const user = await userModel.findOne({ email });
+
+    // Respond the same way whether or not the account exists, so this
+    // endpoint can't be used to check which emails are registered.
+    const genericResponse = {
+        success: true,
+        message: "If an account exists for this email, a reset code has been sent.",
+    };
+
+    if (!user) {
+        return res.status(200).json(genericResponse);
+    }
+
+    const otp = generateOtp();
+    await storeOtp(email, otp);
+
+    await sendEmail({
+        to: email,
+        subject: "Your AskQuery password reset code",
+        html: `
+                <p>Hi ${user.username},</p>
+                <p>Your password reset code is:</p>
+                <h2 style="letter-spacing:6px;">${otp}</h2>
+                <p>This code expires in 10 minutes. If you didn't request this, you can safely ignore this email.</p>
+                <p>Best regards,<br>AskQuery</p>
+        `,
+        text: `Your AskQuery password reset code is ${otp}. It expires in 10 minutes.`,
+    });
+
+    return res.status(200).json(genericResponse);
+}
+
+export async function verifyResetOtp(req, res) {
+    const { email, otp } = req.body;
+
+    const record = await getOtpRecord(email);
+
+    if (!record) {
+        return res.status(400).json({
+            success: false,
+            message: "Code expired or invalid. Please request a new one.",
+        });
+    }
+
+    if (record.attempts >= OTP_MAX_ATTEMPTS) {
+        await clearOtp(email);
+        return res.status(429).json({
+            success: false,
+            message: "Too many incorrect attempts. Please request a new code.",
+        });
+    }
+
+    if (record.otp !== otp) {
+        await incrementOtpAttempts(email, record);
+        return res.status(400).json({
+            success: false,
+            message: "Incorrect code. Please try again.",
+        });
+    }
+
+    // OTP is single-use — clear it immediately so it can't be replayed,
+    // and hand back a short-lived token that authorizes the actual reset.
+    await clearOtp(email);
+
+    const resetToken = jwt.sign(
+        { email, purpose: "password_reset" },
+        process.env.JWT_SECRET,
+        { expiresIn: "10m" }
+    );
+
+    return res.status(200).json({
+        success: true,
+        message: "Code verified.",
+        resetToken,
+    });
+}
+
+export async function resetPassword(req, res) {
+    const { resetToken, newPassword } = req.body;
+
+    let decoded;
+    try {
+        decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+    } catch (err) {
+        return res.status(400).json({
+            success: false,
+            message: "Reset session expired or invalid. Please start again.",
+        });
+    }
+
+    if (decoded.purpose !== "password_reset") {
+        return res.status(400).json({
+            success: false,
+            message: "Reset session expired or invalid. Please start again.",
+        });
+    }
+
+    const user = await userModel.findOne({ email: decoded.email });
+
+    if (!user) {
+        return res.status(400).json({
+            success: false,
+            message: "User not found.",
+        });
+    }
+
+    user.password = newPassword; // pre-save hook hashes it
+    await user.save();
+
+    return res.status(200).json({
+        success: true,
+        message: "Password reset successful.",
+    });
 }
 
 

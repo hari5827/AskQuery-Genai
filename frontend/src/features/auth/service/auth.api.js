@@ -36,3 +36,18 @@ export const deleteAccount = async ({ email, password }) => {
   return res.data;
 
 };
+
+export async function forgotPassword({ email }) {
+    const response = await api.post("/api/auth/forgot-password", { email })
+    return response.data
+}
+
+export async function verifyResetOtp({ email, otp }) {
+    const response = await api.post("/api/auth/verify-reset-otp", { email, otp })
+    return response.data
+}
+
+export async function resetPassword({ resetToken, newPassword }) {
+    const response = await api.post("/api/auth/reset-password", { resetToken, newPassword })
+    return response.data
+}
