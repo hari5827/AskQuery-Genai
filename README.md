@@ -41,6 +41,7 @@ Under the hood, the app chunks and embeds source content, stores the vectors in 
 ## ✨ Features
 
 - 🔐 **Secure authentication** — JWT stored in HTTP-only cookies, with rate-limited login/register endpoints
+- 🔑 **Forgot password / OTP reset** — email a 4-digit OTP via Brevo, verify it, then reset the password via a short-lived signed token; OTPs are single-use, Redis-backed with a 10-minute TTL, and rate-limited
 - 📧 **Email verification** — transactional emails sent via **Brevo's API** on registration
 - 📄 **PDF upload & RAG chat** — parse, chunk, embed, and semantically search PDF content
 - ▶️ **YouTube Q&A** — ask questions about videos via their transcript (fetched automatically using `youtubei.js`). On cloud deployments, YouTube's anti-bot protections can occasionally block automatic fetching — when that happens, the app falls back to a **manual transcript paste** flow instead of failing outright, so the feature stays usable regardless of environment
@@ -171,6 +172,26 @@ flowchart TD
     I --> J[Access Protected Routes]
 ```
 
+## 🔑 Forgot Password Flow
+
+```mermaid
+flowchart TD
+    A[User clicks Forgot Password] --> B[Enter Email]
+    B --> C[Generate 4-digit OTP]
+    C --> D[Store OTP in Redis - 10min TTL]
+    D --> E[Email OTP via Brevo API]
+    E --> F[User Enters OTP]
+    F --> G{OTP Valid?}
+    G -->|No| H[Increment Attempt Count / Reject]
+    G -->|Yes| I[Clear OTP - Issue Short-lived Reset Token]
+    I --> J[User Sets New Password]
+    J --> K[Verify Reset Token]
+    K --> L[Update Password Hash in MongoDB]
+    L --> M[Redirect to Login]
+```
+
+> Both the email-lookup response and the OTP itself are designed to avoid leaking whether an account exists: `/forgot-password` always returns the same generic message, and the OTP is deleted after the first correct attempt (or after too many wrong ones) so it can't be replayed.
+
 ---
 
 ## 📂 Project Structure
@@ -181,7 +202,7 @@ AskQuery-Genai/
 │   ├── src/
 │   │   ├── app/                 # App shell, routes, store, global CSS
 │   │   └── features/
-│   │       ├── auth/            # Login/Register pages, auth slice & API
+│   │       ├── auth/            # Login/Register/ForgotPassword pages, auth slice & API
 │   │       ├── chat/            # Chat UI, socket service, chat slice
 │   │       └── pdf/             # Document upload/list, YouTube add, pdf slice
 │   ├── public/
@@ -197,9 +218,9 @@ AskQuery-Genai/
         ├── middleware/           # auth, upload (Multer), rate limiting
         ├── models/                # User, Chat, Message, Document (Mongoose)
         ├── routes/                # /api/auth, /api/chats, /api/pdf, /api/youtube
-        ├── services/              # ai, rag, embedding, vector, internet, cache, pdf, youtube, mail
+        ├── services/              # ai, rag, embedding, vector, internet, cache, pdf, youtube, mail, passwordReset
         ├── sockets/               # Socket.io server setup
-        ├── utils/                 # prompt builder, document splitter
+        ├── utils/                 # prompt builder, document splitter, OTP generator
         └── validator/             # request validation
 ```
 
@@ -273,6 +294,8 @@ TAVILY_API_KEY=
 ```
 
 > **Note:** In Pinecone, create an index named `askquery` before running the app (see `backend/src/config/pinecone.js`).
+>
+> **Note:** No extra env vars are needed for the forgot-password feature — it reuses `BREVO_API_KEY` / `BREVO_SENDER_EMAIL` for sending the OTP, `REDIS_URL` for storing it, and `JWT_SECRET` for signing the short-lived reset token.
 
 And in the **frontend** folder, create a `.env` (or `.env.production` for deployment):
 ```env
@@ -307,6 +330,9 @@ VITE_API_URL=http://localhost:3000
 | POST | `/register` | Create a new account (rate-limited) |
 | POST | `/login` | Log in, receive JWT cookie (rate-limited) |
 | GET | `/verify-email` | Verify email via emailed link/token |
+| POST | `/forgot-password` | Request a password reset OTP by email (rate-limited; always returns a generic success message regardless of whether the email exists) |
+| POST | `/verify-reset-otp` | Verify the 4-digit OTP; returns a short-lived `resetToken` on success (rate-limited) |
+| POST | `/reset-password` | Reset the password using `{ resetToken, newPassword }` |
 | GET | `/get-me` | Get the current authenticated user |
 | POST | `/logout` | Clear auth cookie |
 | DELETE | `/delete-account` | Permanently delete the account |
@@ -334,7 +360,7 @@ VITE_API_URL=http://localhost:3000
 |---|---|---|
 | POST | `/add` | Submit a YouTube URL; transcript is fetched automatically via `youtubei.js`, chunked, and embedded. If automatic fetching fails, responds with `422` and `needsManualTranscript: true` so the client can prompt the user to paste the transcript directly (resubmit with `{ url, transcript }`) |
 
-All routes above (except register/login/verify-email) require authentication via the `authUser` middleware, and upload/ask/auth routes are protected by dedicated rate limiters.
+All routes above (except register/login/verify-email/forgot-password/verify-reset-otp/reset-password) require authentication via the `authUser` middleware, and upload/ask/auth routes are protected by dedicated rate limiters.
 
 ---
 
@@ -345,6 +371,7 @@ All routes above (except register/login/verify-email) require authentication via
 - [x] Redis caching layer
 - [x] Manual transcript fallback for blocked YouTube fetches
 - [x] User-selectable chat model (Gemini / Cohere)
+- [x] Forgot password (OTP-based reset via Brevo + Redis)
 
 
 ---
@@ -396,4 +423,3 @@ This project is licensed under the MIT License.
 ## ⭐ Support
 
 If you found this project useful, please consider giving it a ⭐ on GitHub — it helps others discover it and supports future development.
-
